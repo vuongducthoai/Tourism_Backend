@@ -1,0 +1,94 @@
+Create Database BookRental
+
+CREATE TABLE Users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('Reader', 'Admin') NOT NULL DEFAULT 'Reader',
+    status ENUM('Active', 'Blocked') NOT NULL DEFAULT 'Active',
+    block_reason TEXT NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP	
+);
+
+CREATE TABLE Books (
+    book_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    author VARCHAR(255) NOT NULL,
+    image VARCHAR(255) NULL DEFAULT NULL,
+    stock INT NOT NULL CHECK (stock >= 0),
+    status ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE(title, author)
+);
+
+CREATE TABLE BorrowingTransactions (
+    transaction_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    book_id INT NOT NULL,
+    borrow_date DATE NOT NULL,
+    due_date DATE NOT NULL,
+    return_date DATE,
+    status ENUM('Borrowed', 'Returned', 'Overdue') NOT NULL DEFAULT 'Borrowed',
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (book_id) REFERENCES Books(book_id)
+);
+
+
+INSERT INTO Books (title, author, image, stock, status, created_at, updated_at) VALUES
+('Agile Web Development with Rails 8', 'Sam Ruby', '/images/books/Agile Web Development with Rails 8.webp', 25, 'Active', NOW(), NOW()),
+('Automate the Boring Stuff with Python, 3rd Edition', 'Al Sweigart', '/images/books/Automate the Boring Stuff with Python, 3rd Edition.webp', 42, 'Active', NOW(), NOW()),
+('Build a Large Language Model (From Scratch)', 'David Miller', '/images/books/Build a Large Language Model (From Scratch).webp', 15, 'Active', NOW(), NOW()),
+('C# Programming in easy steps', 'Mike McGrath', '/images/books/C# Programming in easy steps.webp', 33, 'Active', NOW(), NOW()),
+('C++ All-in-One For Dummies', 'John Paul Mueller', '/images/books/C++ All-in-One For Dummies.webp', 28, 'Active', NOW(), NOW()),
+('C++ Pocket Reference', 'Kyle Loudon', '/images/books/C++ Pocket Reference.webp', 18, 'Active', NOW(), NOW()),
+('C Programming Language, 2nd Edition', 'Brian W. Kernighan', '/images/books/C Programming Language, 2nd Edition.webp', 50, 'Active', NOW(), NOW()),
+('Code Complete', 'Steve McConnell', '/images/books/Code Complete.webp', 38, 'Active', NOW(), NOW()),
+('Coding Games in Scratch', 'Jon Woodcock', '/images/books/Coding Games in Scratch.webp', 22, 'Active', NOW(), NOW()),
+('Coding Projects in Python (DK Help Your Kids)', 'Carol Vorderman', '/images/books/Coding Projects in Python (DK Help Your Kids).webp', 19, 'Active', NOW(), NOW()),
+('Complete Python Guide for Absolute Beginners', 'Jane Smith', '/images/books/Complete Python Guide for Absolute Beginners.webp', 31, 'Active', NOW(), NOW()),
+('Design and Analysis of Data Structures', 'Michael T. Goodrich', '/images/books/Design and Analysis of Data Structures.webp', 27, 'Active', NOW(), NOW()),
+('Eloquent JavaScript, 4th Edition', 'Marijn Haverbeke', '/images/books/Eloquent JavaScript, 4th Edition.webp', 45, 'Active', NOW(), NOW()),
+('Game Programming Patterns', 'Robert Nystrom', '/images/books/Game Programming Patterns.webp', 24, 'Active', NOW(), NOW()),
+('Grokking Algorithms, Second Edition', 'Aditya Bhargava', '/images/books/Grokking Algorithms, Second Edition.webp', 55, 'Active', NOW(), NOW()),
+('Java Extreme Programming Cookbook', 'Eric Burke', '/images/books/Java Extreme Programming Cookbook.webp', 12, 'Active', NOW(), NOW()),
+('Learning Visual Basic .Net', 'Jesse Liberty', '/images/books/Learning Visual Basic .Net.webp', 8, 'Active', NOW(), NOW()),
+('Math for Programming', 'Casey G. Williams', '/images/books/Math for Programming.webp', 30, 'Active', NOW(), NOW()),
+('Planning Extreme Programming', 'Kent Beck', '/images/books/Planning Extreme Programming.webp', 17, 'Active', NOW(), NOW()),
+('Practical Programming for Strength Training', 'Mark Rippetoe', '/images/books/Practical Programming for Strength Training.webp', 11, 'Active', NOW(), NOW()),
+('Python in easy steps', 'Mike McGrath', '/images/books/Python in easy steps.webp', 34, 'Active', NOW(), NOW()),
+('Python Programming Exercises, Gently Explained', 'Al Sweigart', '/images/books/Python Programming Exercises, Gently Explained.webp', 29, 'Active', NOW(), NOW()),
+('Rust Programming in easy steps', 'Mike McGrath', '/images/books/Rust Programming in easy steps.webp', 21, 'Active', NOW(), NOW()),
+('Scratch Programming in easy steps', 'Sean McManus', '/images/books/Scratch Programming in easy steps.webp', 16, 'Active', NOW(), NOW()),
+('SQL Programming QuickStudy Laminated Reference Guide', 'John Doe', '/images/books/SQL Programming QuickStudy Laminated Reference Guide.webp', 40, 'Active', NOW(), NOW()),
+('The C# Player''s Guide (5th Edition)', 'RB Whitaker', '/images/books/The C# Player''s Guide (5th Edition).webp', 36, 'Active', NOW(), NOW()),
+('The C# Programming Yellow Book', 'Rob Miles', '/images/books/The C# Programming Yellow Book.webp', 39, 'Active', NOW(), NOW()),
+('The Rust Programming Language, 2nd Edition', 'Steve Klabnik', '/images/books/The Rust Programming Language, 2nd Edition.webp', 26, 'Active', NOW(), NOW()),
+('The Ultimate Coding Handbook for Kids', 'George Smith', '/images/books/The Ultimate Coding Handbook for Kids.webp', 14, 'Active', NOW(), NOW()),
+('Tour of C++, A (C++ In-Depth Series)', 'Bjarne Stroustrup', '/images/books/Tour of C++, A (C++ In-Depth Series).webp', 48, 'Active', NOW(), NOW());
+
+
+INSERT INTO Users (name, email, password, role, status, block_reason, created_at) VALUES
+('Nguyễn An', 'admin.an@example.com', '$2a$10$3up4Ew2hD2zXO.jK.d18/uJ17zOh.VBF0fFpEM.a.B.MvylJg4cOW', 'Admin', 'Active', NULL, NOW()),
+('Trần Bảo', 'bao.tran@example.com', '$2a$10$3up4Ew2hD2zXO.jK.d18/uJ17zOh.VBF0fFpEM.a.B.MvyllJg4cOW', 'Reader', 'Blocked', 'Trả sách quá hạn nhiều lần.', NOW()), -- Đã sửa 'Banned' -> 'Blocked'
+('Lê Chi', 'chi.le@example.com', '$2a$10$3up4Ew2hD2zXO.jK.d18/uJ17zOh.VBF0fFpEM.a.B.MvyllJg4cOW', 'Reader', 'Active', NULL, NOW()),
+('Phạm Dũng', 'dung.pham@example.com', '$2a$10$3up4Ew2hD2zXO.jK.d18/uJ17zOh.VBF0fFpEM.a.B.MvyllJg4cOW', 'Reader', 'Active', NULL, NOW()),
+('Hoàng Giang', 'giang.hoang@example.com', '$2a$10$3up4Ew2hD2zXO.jK.d18/uJ17zOh.VBF0fFpEM.a.B.MvyllJg4cOW', 'Reader', 'Active', NULL, NOW()),
+('Vũ Hương', 'huong.vu@example.com', '$2a$10$3up4Ew2hD2zXO.jK.d18/uJ17zOh.VBF0fFpEM.a.B.MvyllJg4cOW', 'Reader', 'Active', NULL, NOW()),
+('Đặng Khánh', 'khanh.dang@example.com', '$2a$10$3up4Ew2hD2zXO.jK.d18/uJ17zOh.VBF0fFpEM.a.B.MvyllJg4cOW', 'Reader', 'Blocked', 'Làm hỏng sách.', NOW()), -- Đã sửa 'Banned' -> 'Blocked'
+('Bùi Linh', 'linh.bui@example.com', '$2a$10$3up4Ew2hD2zXO.jK.d18/uJ17zOh.VBF0fFpEM.a.B.MvyllJg4cOW', 'Reader', 'Active', NULL, NOW()),
+('Ngô Minh', 'minh.ngo@example.com', '$2a$10$3up4Ew2hD2zXO.jK.d18/uJ17zOh.VBF0fFpEM.a.B.MvyllJg4cOW', 'Reader', 'Active', NULL, NOW()),
+('Đỗ Nga', 'nga.do@example.com', '$2a$10$3up4Ew2hD2zXO.jK.d18/uJ17zOh.VBF0fFpEM.a.B.MvyllJg4cOW', 'Reader', 'Active', NULL, NOW());
+
+
+INSERT INTO borrowing_transactions (user_id, book_id, borrow_date, due_date, return_date, status) VALUES
+(22, 1, '2025-10-01', '2025-10-20', NULL, 'Borrowed'),
+(23, 2, '2025-10-10', '2025-10-30', NULL, 'Borrowed'),
+(24, 3, '2025-09-20', '2025-10-10', NULL, 'Overdue'),
+(25, 4, '2025-09-15', '2025-10-05', '2025-10-01', 'Returned'),
+(26, 5, '2025-08-10', '2025-09-01', '2025-09-10', 'Returned'),
+(27, 6, '2025-10-14', '2025-11-05', NULL, 'Borrowed'),
+(27, 7, '2025-09-01', '2025-09-20', '2025-09-18', 'Returned'),
+(28, 8, '2025-08-20', '2025-09-10', '2025-09-08', 'Returned');
