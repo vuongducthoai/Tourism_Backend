@@ -1,4 +1,5 @@
 package com.tourism.backend.entity;
+import com.tourism.backend.enums.PaymentStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -16,7 +17,8 @@ public class Payment extends BaseEntity{
     @NotNull
     private BigDecimal amount;
 
-    private Boolean status;
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status;
 
     // OneToOne with Booking
     @OneToOne(fetch = FetchType.LAZY)

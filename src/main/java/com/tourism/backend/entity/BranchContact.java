@@ -1,10 +1,13 @@
 package com.tourism.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.List;
 
 @Entity
 @Table(name = "branch_contacts")
@@ -25,6 +28,14 @@ public class BranchContact  extends BaseEntity{
     @Email
     private String email;
 
-    @Column(name = "departure_id")
-    private Integer departureID;
+    @NotBlank(message = "Address is required")
+    private String address;
+
+    @Column(name ="is_head_office")
+    private Boolean isHeadOffice = false;
+
+    @OneToMany(mappedBy = "contact", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<PolicyTemplate> policies;
+
 }

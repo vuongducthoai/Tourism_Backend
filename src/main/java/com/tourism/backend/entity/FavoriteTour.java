@@ -14,7 +14,7 @@ public class FavoriteTour extends  BaseEntity{
     private Integer favoriteID;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tour_code", nullable = false)
+    @JoinColumn(name = "tour_id", nullable = false)
     private Tour tour;
 
     @ManyToOne(fetch = FetchType.LAZY)

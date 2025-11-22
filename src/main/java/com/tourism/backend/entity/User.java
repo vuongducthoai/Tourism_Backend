@@ -1,9 +1,12 @@
 package com.tourism.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tourism.backend.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -11,6 +14,7 @@ import java.util.List;
 @Table(name = "users")
 @Data
 @EqualsAndHashCode(callSuper = true)
+@ToString(exclude = {"bookings", "favoriteTours", "reviews"})
 public class User extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,10 +44,20 @@ public class User extends BaseEntity{
     @Past(message = "Date of birth must be in the past")
     private LocalDate dateOfBirth;
 
+    @Column(name = "coin_balance", nullable = false)
+    @Min(value = 0, message = "Coin balance cannot be negative")
+    private BigDecimal coinBalance = BigDecimal.ZERO;
+
     // --- Relationships ---
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<Booking> bookings;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<FavoriteTour> favoriteTours;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private  List<Review> reviews;
 }

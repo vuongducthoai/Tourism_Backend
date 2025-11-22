@@ -1,17 +1,30 @@
 package com.tourism.backend.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Entity
 @Table(name = "policy_templates")
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class PolicyTemplate extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer policyTemplateID;
+
+    @NotBlank(message = "The policy template name cannot be empty")
+    @Size(max = 255)
+    @Column(name = "template_name", unique = true, nullable = false)
+    private String templateName;  //"Chính sách Tour Biển 2025" hay "Chính sách Tour Nước Ngoài" để chọn trong Dropdown.
 
     @Column(columnDefinition = "TEXT")
     private String childPricingNotes;
@@ -37,4 +50,7 @@ public class PolicyTemplate extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "contact_id")
     private BranchContact contact;
+
+    @OneToMany(mappedBy = "policyTemplate")
+    private List<TourDeparture> tourDepartures;
 }

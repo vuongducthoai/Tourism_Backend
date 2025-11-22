@@ -1,5 +1,6 @@
 package com.tourism.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -11,12 +12,24 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@ToString(exclude = {"images", "itineraryDays", "departures", "coupons"})
 public class Tour extends BaseEntity{
     @Id
-    @Column(name = "tour_code", length = 50)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer tourID;
+
+    @Column(name = "tour_code", length = 50, unique = true, nullable = false)
     @NotBlank(message = "Tour code is required")
     @Pattern(regexp = "^[A-Z0-9-]+$", message = "Tour code must contain only uppercase letters, numbers, and hyphens")
     private String tourCode;
+
+    @PrePersist
+    @PreUpdate
+    public void normalizeTourCode(){
+        if(this.tourCode != null){
+            this.tourCode = this.tourCode.trim().toUpperCase();
+        }
+    }
 
     @Column(name = "tour_name", nullable = false)
     @NotBlank(message = "Tour name is required")
@@ -64,11 +77,6 @@ public class Tour extends BaseEntity{
     private List<ItineraryDay> itineraryDays;
 
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<TourDeparture> departures;
-
-    @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL)
-    private List<DeparturePricing> pricings;
-
-    @OneToMany(mappedBy = "tour")
-    private List<Coupon> coupons;
 }

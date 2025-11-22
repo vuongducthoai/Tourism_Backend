@@ -32,6 +32,6 @@ public class ItineraryDay extends BaseEntity{
     private String details;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tour_code", nullable = false)
+    @JoinColumn(name = "tour_id", nullable = false)
     private Tour tour;
 }

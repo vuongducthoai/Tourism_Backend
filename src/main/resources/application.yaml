@@ -2,14 +2,18 @@ server:
   port: 8080
 spring:
   datasource:
-    url: ${DBMS_CONNECTION:jdbc:mysql://localhost:3306/tourism}
-    driverClassName: "com.mysql.cj.jdbc.Driver"
-    password: ${DBMS_PASSWORD:Thoai12309@}
-    username: ${DBMS_USERNAME:root}
+    url: ${DBMS_CONNECTION:jdbc:postgresql://localhost:5432/tourism}
+    driverClassName: "org.postgresql.Driver"
+    username: ${DBMS_USERNAME:postgres}
+    password: ${DBMS_PASSWORD:postgres}
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
   mail:
     host: smtp.gmail.com
@@ -26,6 +30,12 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+
+cloudinary:
+  cloud-name: dnt8vx1at
+  api-key: 939641688935771
+  api-secret: WPzZSJqg4MVvHKUuvPFeHL981J0
+
 app:
   frontend:
     url: http://localhost:3000/reset-password

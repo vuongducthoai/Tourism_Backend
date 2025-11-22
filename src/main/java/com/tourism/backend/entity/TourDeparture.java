@@ -1,19 +1,23 @@
 package com.tourism.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "tour_departures")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@ToString(exclude = {"tour", "pricings"})
 public class TourDeparture extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,11 +36,15 @@ public class TourDeparture extends BaseEntity{
     @NotBlank(message = "Tour guide info is required")
     private String tourGuideInfo;
 
-    @Column(name = "policy_template_id")
-    @NotNull(message = "Policy template ID is required")
-    private Integer policyTemplateID;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "policy_template_id", nullable = false)
+    private PolicyTemplate policyTemplate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tour_code", nullable = false)
+    @JoinColumn(name = "tour_id", nullable = false)
+    @JsonIgnore
     private Tour tour;
+
+    @OneToMany(mappedBy = "tourDeparture", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DeparturePricing> pricings;
 }

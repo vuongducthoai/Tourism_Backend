@@ -12,6 +12,7 @@ import lombok.EqualsAndHashCode;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "bookings")
@@ -21,6 +22,17 @@ public class Booking extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer bookingID;
+
+    @Column(name = "booking_code", unique = true, nullable = false, length = 20)
+    private String bookingCode;
+
+    //Function initial automatic bookingCode when create new object
+    @PrePersist
+    public void generateBookingCode(){
+        if(this.bookingCode == null){
+            this.bookingCode = "Bk-" + UUID.randomUUID().toString().substring(0, 8);
+        }
+    }
 
     @NotNull
     private LocalDateTime bookingDate = LocalDateTime.now();
@@ -41,17 +53,32 @@ public class Booking extends BaseEntity{
     @Column(columnDefinition = "TEXT")
     private String customerNote;
 
+    @Min(1)
+    private Integer totalPassengers; // tổng số khách booking
+
     @NotNull
     @Min(0)
     private BigDecimal subtotalPrice;
 
     private BigDecimal surcharge;
 
-    private BigDecimal discountAmount;
+    //So tien duoc giam gia tu Coupon
+    @Column(name = "discount_amount")
+    private BigDecimal discountAmount = BigDecimal.ZERO;
 
+    //So tien duoc giam tu Coin de thanh toan
+    @Column(name = "paid_by_coin")
+    private BigDecimal paidByCoin = BigDecimal.ZERO;
+
+    // Tong tien phai tra = Subtotal + Surcharge - Discount - PaidByCoin
     @NotNull
     @Min(0)
     private BigDecimal totalPrice;
+
+    @Column(columnDefinition = "TEXT")
+    private String cancelReason; //Ly do huy don
+
+    private BigDecimal refundAmount;
 
     @Enumerated(EnumType.STRING)
     private BookingStatus bookingStatus;
