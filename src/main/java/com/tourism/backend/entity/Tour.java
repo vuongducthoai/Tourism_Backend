@@ -42,13 +42,15 @@ public class Tour extends BaseEntity{
     @NotBlank(message = "Transportation info is required")
     private String transportation;
 
-    @Column(name = "start_point")
-    @NotBlank(message = "Start point is required")
-    private String startPoint;
+    @NotNull(message = "Điểm khởi hành không được để trống")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "start_location_id", nullable = false)
+    private Location startLocation;
 
-    @Column(name = "end_point")
-    @NotBlank(message = "End point is required")
-    private String endPoint;
+    @NotNull(message = "Điểm đến không được để trống")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "end_location_id", nullable = false)
+    private Location endLocation;
 
     @Column(columnDefinition = "TEXT")
     @NotBlank(message = "Attractions description is required")

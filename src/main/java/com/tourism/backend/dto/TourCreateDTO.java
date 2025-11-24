@@ -10,8 +10,8 @@ public class TourCreateDTO {
     private String tourName;
     private String duration;
     private String transportation;
-    private String startPoint;
-    private String endPoint;
+    private Integer startLocationId;
+    private Integer endLocationId;
     private String attractions;
     private String meals;
     private String hotel;

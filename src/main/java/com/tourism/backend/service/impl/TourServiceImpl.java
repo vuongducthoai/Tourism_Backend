@@ -1,8 +1,10 @@
-package com.tourism.backend.service.impl; // Thường để trong package impl
+package com.tourism.backend.service.impl;
 
 import com.tourism.backend.dto.TourCreateDTO;
+import com.tourism.backend.entity.Location;
 import com.tourism.backend.entity.Tour;
 import com.tourism.backend.entity.TourImage;
+import com.tourism.backend.repository.LocationRepository;
 import com.tourism.backend.repository.TourRepository;
 import com.tourism.backend.service.CloudinaryService;
 import com.tourism.backend.service.TourService;
@@ -21,6 +23,7 @@ public class TourServiceImpl implements TourService {
 
     private final TourRepository tourRepository;
     private final CloudinaryService cloudinaryService;
+    private final LocationRepository locationRepository;
 
     @Override // Ghi đè phương thức từ Interface
     @Transactional
@@ -34,8 +37,17 @@ public class TourServiceImpl implements TourService {
         tour.setTourName(dto.getTourName());
         tour.setDuration(dto.getDuration());
         tour.setTransportation(dto.getTransportation());
-        tour.setStartPoint(dto.getStartPoint());
-        tour.setEndPoint(dto.getEndPoint());
+
+        Location startLoc = locationRepository.findById(dto.getStartLocationId())
+                .orElseThrow(() -> new RuntimeException("Start location Id not found"));
+        tour.setStartLocation(startLoc);
+
+        tour.setStartLocation(startLoc);
+
+        Location endLoc = locationRepository.findById(dto.getEndLocationId())
+                .orElseThrow(() -> new RuntimeException("End location Id not found: " + dto.getEndLocationId()));
+        tour.setEndLocation(endLoc);
+
         tour.setAttractions(dto.getAttractions());
 
         // Xử lý các trường có thể null (Optional)
