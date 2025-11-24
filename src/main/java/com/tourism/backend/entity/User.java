@@ -13,6 +13,8 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(exclude = {"bookings", "favoriteTours", "reviews"})
 public class User extends BaseEntity{

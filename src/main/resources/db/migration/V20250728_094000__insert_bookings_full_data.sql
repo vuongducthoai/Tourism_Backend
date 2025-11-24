@@ -7,7 +7,7 @@ INSERT INTO bookings (
     booking_code, booking_date,
     contact_full_name, contact_email, contact_phone, contact_address, customer_note,
     total_passengers,
-    subtotal_price, surcharge, discount_amount, paid_by_coin, total_price,
+    subtotal_price, surcharge, coupon_discount, paid_by_coin, total_price,
     booking_status, -- Status của Booking thì vẫn dùng PAID ok
     user_id, departure_id, coupon_id,
     created_at, updated_at, created_by, updated_by, is_deleted
@@ -65,7 +65,7 @@ INSERT INTO bookings (
     booking_code, booking_date,
     contact_full_name, contact_email, contact_phone, contact_address, customer_note,
     total_passengers,
-    subtotal_price, surcharge, discount_amount, paid_by_coin, total_price,
+    subtotal_price, surcharge, coupon_discount, paid_by_coin, total_price,
     booking_status,
     user_id, departure_id, coupon_id,
     created_at, updated_at, created_by, updated_by, is_deleted

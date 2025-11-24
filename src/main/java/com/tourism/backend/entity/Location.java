@@ -12,20 +12,24 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Location {
+@EqualsAndHashCode(callSuper = true)
+public class Location extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer locationID;
 
     @Column(nullable = false, unique = true)
-    private String name; //Hà Nội, Đà Nẵng, TP.HCM
+    private String name;
 
     @Column(nullable = false, unique = true)
-    private String slug; //ha-noi, da-nang (Dùng cho URL)
+    private String slug;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Region region;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @OneToMany(mappedBy = "startLocation")
     @JsonIgnore

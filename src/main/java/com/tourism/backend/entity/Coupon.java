@@ -1,19 +1,25 @@
 package com.tourism.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "coupons")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class Coupon extends BaseEntity{
     @Id
@@ -43,6 +49,16 @@ public class Coupon extends BaseEntity{
 
     @Column(name = "min_order_value")
     private BigDecimal minOrderValue;
+
+    //Áp dụng cho Ngày khởi hành cụ thể (VD: Giảm giá vét vé giờ chót)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "departure_id")
+    private TourDeparture tourDeparture;
+
+    //(Để biết mã này đã được dùng trong những đơn nào)
+    @OneToMany(mappedBy = "coupon")
+    @JsonIgnore
+    private List<Booking> usedInBookings;
 
     public boolean isValid() {
         LocalDateTime now = LocalDateTime.now();

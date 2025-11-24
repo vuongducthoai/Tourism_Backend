@@ -6,8 +6,10 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -17,6 +19,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "bookings")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class Booking extends BaseEntity{
     @Id
@@ -63,11 +67,11 @@ public class Booking extends BaseEntity{
     private BigDecimal surcharge;
 
     //So tien duoc giam gia tu Coupon
-    @Column(name = "discount_amount")
-    private BigDecimal discountAmount = BigDecimal.ZERO;
+    @Column(name = "coupon_discount", nullable = false)
+    private BigDecimal couponDiscount = BigDecimal.ZERO;
 
     //So tien duoc giam tu Coin de thanh toan
-    @Column(name = "paid_by_coin")
+    @Column(name = "paid_by_coin", nullable = false)
     private BigDecimal paidByCoin = BigDecimal.ZERO;
 
     // Tong tien phai tra = Subtotal + Surcharge - Discount - PaidByCoin

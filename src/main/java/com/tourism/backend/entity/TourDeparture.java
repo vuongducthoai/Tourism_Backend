@@ -47,4 +47,8 @@ public class TourDeparture extends BaseEntity{
 
     @OneToMany(mappedBy = "tourDeparture", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DeparturePricing> pricings;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coupon_id")
+    private Coupon coupon;
 }
