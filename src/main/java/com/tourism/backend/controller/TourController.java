@@ -1,9 +1,12 @@
 package com.tourism.backend.controller;
 
 import com.tourism.backend.dto.TourCreateDTO;
+import com.tourism.backend.dto.responseDTO.ErrorResponseDTO;
+import com.tourism.backend.dto.responseDTO.TourResponseDTO;
 import com.tourism.backend.entity.Tour;
 import com.tourism.backend.service.TourService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.MediaType;
@@ -40,6 +43,23 @@ public class TourController {
             return ResponseEntity.ok(tour);
         } catch (RuntimeException e) {
             return ResponseEntity.status(404).body(e.getMessage());
+        }
+    }
+    /**
+     * API mới: Lấy tất cả các Tour theo định dạng TourReponsetory DTO.
+     * HTTP GET /api/tours/display
+     */
+    @GetMapping("/display")
+    public ResponseEntity<?> getAllToursForDisplay() {
+        try {
+            List<TourResponseDTO> tours = tourService.getAllToursForListDisplay();
+            return ResponseEntity.ok(tours);
+        } catch (Exception e) {
+            ErrorResponseDTO error = new ErrorResponseDTO(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "Internal Error",
+                    "Lỗi khi lấy danh sách tour: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
 }

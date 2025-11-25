@@ -1,6 +1,8 @@
 package com.tourism.backend.service.impl;
 
+import com.tourism.backend.convert.TourConvert;
 import com.tourism.backend.dto.TourCreateDTO;
+import com.tourism.backend.dto.responseDTO.TourResponseDTO;
 import com.tourism.backend.entity.Location;
 import com.tourism.backend.entity.Tour;
 import com.tourism.backend.entity.TourImage;
@@ -16,11 +18,12 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TourServiceImpl implements TourService {
-
+    private final TourConvert tourConvert; // 👈 Inject TourConvert
     private final TourRepository tourRepository;
     private final CloudinaryService cloudinaryService;
     private final LocationRepository locationRepository;
@@ -106,5 +109,15 @@ public class TourServiceImpl implements TourService {
     public Tour getTourByCode(String tourCode) {
         return tourRepository.findByTourCode(tourCode)
                 .orElseThrow(() -> new RuntimeException("Tour with: " + tourCode + " is not found"));
+    }
+
+    @Override
+    public List<TourResponseDTO> getAllToursForListDisplay() {
+        // Lấy danh sách Tour Entity
+        List<Tour> tours = tourRepository.findAllToursForListDisplay();
+        // Chuyển đổi từng Entity Tour sang DTO TourReponsetory
+        return tours.stream()
+                .map(tourConvert::convertToTourReponsetoryDTO)
+                .collect(Collectors.toList());
     }
 }
