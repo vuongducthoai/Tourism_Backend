@@ -64,18 +64,5 @@ public class TourController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
-    @PostMapping("/region")
-    public ResponseEntity<?> getLocationsByRegion(@RequestBody RegionRequestDTO dto) {
-        try {
-            if (dto.getRegion() == null) {
-                return ResponseEntity.badRequest().body("Region parameter is required.");
-            }
-            List<DestinationResponseDTO> responseDTOs =
-                    tourService.getFavoriteDestinationsByRegion(dto.getRegion());
-            return ResponseEntity.ok(responseDTOs);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Lỗi server khi tìm kiếm theo region: " + e.getMessage());
-        }
-    }
+
 }

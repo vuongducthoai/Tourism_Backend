@@ -14,9 +14,6 @@ public interface TourService {
 
     List<Tour> getAllTours();
     Tour getTourByCode(String tourCode);
-
-    // Phương thức mới để trả về List DTO
     List<TourResponseDTO> getAllToursForListDisplay();
-    // ✨ PHƯƠNG THỨC MỚI: Lấy danh sách điểm đến theo Region, trả về DTO
-    List<DestinationResponseDTO> getFavoriteDestinationsByRegion(Region region);
+
 }

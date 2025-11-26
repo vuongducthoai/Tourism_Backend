@@ -6,14 +6,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-// DTO này được thiết kế để khớp với DestinationMockData[] ở Frontend
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DestinationResponseDTO {
+public class LocationResponseDTO {
     private Integer locationID;
     private String name;
     private String imageUrl;
-    private Region region;
 }

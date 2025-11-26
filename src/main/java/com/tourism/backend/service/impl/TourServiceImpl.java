@@ -118,23 +118,9 @@ public class TourServiceImpl implements TourService {
 
     @Override
     public List<TourResponseDTO> getAllToursForListDisplay() {
-        // Lấy danh sách Tour Entity
         List<Tour> tours = tourRepository.findAllToursForListDisplay();
-        // Chuyển đổi từng Entity Tour sang DTO TourReponsetory
         return tours.stream()
                 .map(tourConvert::convertToTourReponsetoryDTO)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<DestinationResponseDTO> getFavoriteDestinationsByRegion(Region region) {
-
-
-        List<Location> locations = locationService.getLocationsByRegion(region);
-        List<DestinationResponseDTO> responseDTOs =
-                locationConverter.toDestinationResponseDTOList(locations);
-
-        return responseDTOs;
     }
 }
