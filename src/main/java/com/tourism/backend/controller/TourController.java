@@ -1,6 +1,8 @@
 package com.tourism.backend.controller;
 
 import com.tourism.backend.dto.TourCreateDTO;
+import com.tourism.backend.dto.requestDTO.RegionRequestDTO;
+import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
 import com.tourism.backend.dto.responseDTO.ErrorResponseDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
 import com.tourism.backend.entity.Tour;
@@ -62,4 +64,5 @@ public class TourController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
+
 }

@@ -1,5 +1,6 @@
 package com.tourism.backend.service.impl;
 
+import com.tourism.backend.convert.LocationConverter;
 import com.tourism.backend.convert.TourConvert;
 import com.tourism.backend.dto.TourCreateDTO;
 import com.tourism.backend.dto.response.DepartureDTO;
@@ -9,9 +10,15 @@ import com.tourism.backend.dto.response.TransportDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
 import com.tourism.backend.entity.*;
 import com.tourism.backend.repository.CouponRepository;
+import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
+import com.tourism.backend.entity.Location;
+import com.tourism.backend.entity.Tour;
+import com.tourism.backend.entity.TourImage;
+import com.tourism.backend.enums.Region;
 import com.tourism.backend.repository.LocationRepository;
 import com.tourism.backend.repository.TourRepository;
 import com.tourism.backend.service.CloudinaryService;
+import com.tourism.backend.service.LocationService;
 import com.tourism.backend.service.TourService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,7 +40,8 @@ public class TourServiceImpl implements TourService {
     private final CloudinaryService cloudinaryService;
     private final LocationRepository locationRepository;
     private CouponRepository couponRepository;
-
+    private final LocationService locationService;
+    private final LocationConverter locationConverter;
     @Override // Ghi đè phương thức từ Interface
     @Transactional
     public Tour createTourWithImages(TourCreateDTO dto) throws IOException {
@@ -45,7 +53,7 @@ public class TourServiceImpl implements TourService {
 
         tour.setTourName(dto.getTourName());
         tour.setDuration(dto.getDuration());
-        tour.setTransportation(dto.getTransportation());
+//        tour.setTransportation(dto.getTransportation());
 
         Location startLoc = locationRepository.findById(dto.getStartLocationId())
                 .orElseThrow(() -> new RuntimeException("Start location Id not found"));
@@ -119,9 +127,7 @@ public class TourServiceImpl implements TourService {
 
     @Override
     public List<TourResponseDTO> getAllToursForListDisplay() {
-        // Lấy danh sách Tour Entity
         List<Tour> tours = tourRepository.findAllToursForListDisplay();
-        // Chuyển đổi từng Entity Tour sang DTO TourReponsetory
         return tours.stream()
                 .map(tourConvert::convertToTourReponsetoryDTO)
                 .collect(Collectors.toList());
