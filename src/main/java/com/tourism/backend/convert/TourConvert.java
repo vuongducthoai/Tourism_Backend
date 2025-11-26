@@ -74,7 +74,7 @@ public class TourConvert {
             Long minPrice = tour.getDepartures().stream()
                     .flatMap(departure -> departure.getPricings().stream())
                     .filter(p -> "ADULT".equals(p.getPassengerType()))
-                    .map(DeparturePricing::getMoney)
+                    .map(DeparturePricing::getSalePrice)
                     .min(BigDecimal::compareTo)
                     .map(BigDecimal::longValue)
                     .orElse(0L);

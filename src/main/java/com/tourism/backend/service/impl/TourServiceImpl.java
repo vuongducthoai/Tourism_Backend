@@ -3,8 +3,14 @@ package com.tourism.backend.service.impl;
 import com.tourism.backend.convert.LocationConverter;
 import com.tourism.backend.convert.TourConvert;
 import com.tourism.backend.dto.TourCreateDTO;
-import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
+import com.tourism.backend.dto.response.DepartureDTO;
+import com.tourism.backend.dto.response.DeparturePricingDTO;
+import com.tourism.backend.dto.response.TourDetailResponseDTO;
+import com.tourism.backend.dto.response.TransportDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
+import com.tourism.backend.entity.*;
+import com.tourism.backend.repository.CouponRepository;
+import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
 import com.tourism.backend.entity.Location;
 import com.tourism.backend.entity.Tour;
 import com.tourism.backend.entity.TourImage;
@@ -20,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,6 +39,7 @@ public class TourServiceImpl implements TourService {
     private final TourRepository tourRepository;
     private final CloudinaryService cloudinaryService;
     private final LocationRepository locationRepository;
+    private CouponRepository couponRepository;
     private final LocationService locationService;
     private final LocationConverter locationConverter;
     @Override // Ghi đè phương thức từ Interface
@@ -122,5 +131,56 @@ public class TourServiceImpl implements TourService {
         return tours.stream()
                 .map(tourConvert::convertToTourReponsetoryDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TourDetailResponseDTO getTourDetail(String tourCode) {
+        Tour tour = tourRepository.findByTourCode(tourCode)
+                .orElseThrow(() -> new RuntimeException("Tour not found: " + tourCode));
+
+        //Handle list departure and pricing
+        List<DepartureDTO> departureDTOs = new ArrayList<>();
+        DeparturePricingDTO pricingDTO = new DeparturePricingDTO();
+        LocalDate today = LocalDate.now();
+
+        //"Best trip" (Closest) put on Header
+        DepartureDTO nearestDeparture = null;
+
+        for(TourDeparture dep : tour.getDepartures()){
+            if(dep.getDepartureDate().isBefore(today)) continue;
+
+            List<TransportDTO> transportDTOS = dep.getTransports().stream()
+                    .map(t -> TransportDTO.builder()
+                            .type(t.getType().name())
+                            .transportCode(t.getTransportCode())
+                            .startPoint(t.getStartPoint())
+                            .endPoint(t.getEndPoint())
+                            .departTime(t.getDepartTime())
+                            .arrivalTime(t.getArrivalTime())
+                            .build())
+                    .collect(Collectors.toList());
+
+            //Map pricing
+            List<DeparturePricingDTO> pricings = dep.getPricings().stream()
+                    .map(p -> DeparturePricingDTO.builder()
+                            .passengerType(p.getPassengerType().name())
+                            .ageDescription(p.getAgeDescription())
+                            .originalPrice(p.getOriginalPrice())
+                            .salePrice(p.getSalePrice())
+                            .build())
+                    .collect(Collectors.toList());
+
+            //FIND THE BEST COUPON FOR THIS TRIP
+            String bestCode = null;
+            BigDecimal discount = BigDecimal.ZERO;
+
+            BigDecimal adultPrice = pricings.stream()
+                    .filter(p -> "ADULT".equals(p.getPassengerType()))
+                    .findFirst().map(DeparturePricingDTO::getSalePrice)
+                    .orElse(BigDecimal.ZERO);
+
+        }
+        return null;
     }
 }
