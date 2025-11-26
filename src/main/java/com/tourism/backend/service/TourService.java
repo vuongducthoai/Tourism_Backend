@@ -1,6 +1,7 @@
 package com.tourism.backend.service;
 
 import com.tourism.backend.dto.TourCreateDTO;
+import com.tourism.backend.dto.response.TourDetailResponseDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
 import com.tourism.backend.entity.Tour;
 import java.io.IOException;
@@ -14,4 +15,6 @@ public interface TourService {
 
     // Phương thức mới để trả về List DTO
     List<TourResponseDTO> getAllToursForListDisplay();
+
+    TourDetailResponseDTO getTourDetail(String tourCode);
 }

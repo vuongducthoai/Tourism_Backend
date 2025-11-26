@@ -1,5 +1,6 @@
 package com.tourism.backend.entity;
 
+import com.tourism.backend.enums.PassengerType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -21,17 +22,20 @@ public class DeparturePricing extends BaseEntity{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer pricingID;
 
-    @NotBlank(message = "Passenger type is required")
-    @Pattern(regexp = "^(ADULT|CHILD|INFANT)$", message = "Passenger type must be ADULT, CHILD, or INFANT")
-    private String passengerType;
+    @NotNull(message = "Passenger type is required")
+    @Enumerated(EnumType.STRING)
+    private PassengerType passengerType;
 
     @Column(name = "age_description")
     @NotBlank(message = "Age description is required")
     private String ageDescription; // e.g., "Age 5-10"
 
+    @Min(value = 0, message = "Price cannot be negative")
+    private BigDecimal salePrice;  // giá ban neu co ap dung coupon
+
     @NotNull(message = "Price is required")
     @Min(value = 0, message = "Price cannot be negative")
-    private BigDecimal money;
+    private BigDecimal originalPrice; // gia goc
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "departure_id", nullable = false)
