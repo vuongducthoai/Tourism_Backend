@@ -1,14 +1,18 @@
 package com.tourism.backend.service.impl;
 
+import com.tourism.backend.convert.LocationConverter;
 import com.tourism.backend.convert.TourConvert;
 import com.tourism.backend.dto.TourCreateDTO;
+import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
 import com.tourism.backend.entity.Location;
 import com.tourism.backend.entity.Tour;
 import com.tourism.backend.entity.TourImage;
+import com.tourism.backend.enums.Region;
 import com.tourism.backend.repository.LocationRepository;
 import com.tourism.backend.repository.TourRepository;
 import com.tourism.backend.service.CloudinaryService;
+import com.tourism.backend.service.LocationService;
 import com.tourism.backend.service.TourService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,7 +31,8 @@ public class TourServiceImpl implements TourService {
     private final TourRepository tourRepository;
     private final CloudinaryService cloudinaryService;
     private final LocationRepository locationRepository;
-
+    private final LocationService locationService;
+    private final LocationConverter locationConverter;
     @Override // Ghi đè phương thức từ Interface
     @Transactional
     public Tour createTourWithImages(TourCreateDTO dto) throws IOException {
@@ -39,7 +44,7 @@ public class TourServiceImpl implements TourService {
 
         tour.setTourName(dto.getTourName());
         tour.setDuration(dto.getDuration());
-        tour.setTransportation(dto.getTransportation());
+//        tour.setTransportation(dto.getTransportation());
 
         Location startLoc = locationRepository.findById(dto.getStartLocationId())
                 .orElseThrow(() -> new RuntimeException("Start location Id not found"));
@@ -119,5 +124,17 @@ public class TourServiceImpl implements TourService {
         return tours.stream()
                 .map(tourConvert::convertToTourReponsetoryDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DestinationResponseDTO> getFavoriteDestinationsByRegion(Region region) {
+
+
+        List<Location> locations = locationService.getLocationsByRegion(region);
+        List<DestinationResponseDTO> responseDTOs =
+                locationConverter.toDestinationResponseDTOList(locations);
+
+        return responseDTOs;
     }
 }

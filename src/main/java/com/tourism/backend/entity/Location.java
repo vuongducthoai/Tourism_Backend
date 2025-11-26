@@ -24,6 +24,9 @@ public class Location extends BaseEntity{
     @Column(nullable = false, unique = true)
     private String slug;
 
+    @Column
+    private String image;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Region region;
