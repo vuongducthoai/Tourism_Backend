@@ -45,6 +45,9 @@ public class TourDeparture extends BaseEntity{
     @JsonIgnore
     private Tour tour;
 
+    @OneToMany(mappedBy = "tourDeparture", cascade = CascadeType.ALL)
+    private List<DepartureTransport> transports;
+
     @OneToMany(mappedBy = "tourDeparture", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DeparturePricing> pricings;
 
