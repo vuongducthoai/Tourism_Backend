@@ -23,10 +23,10 @@ public class TourDeparture extends BaseEntity{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer departureID;
 
-    @Column(name = "departure_date", nullable = false)
-    @NotNull(message = "Departure date is required")
-    @Future(message = "Departure date must be in the future")
-    private LocalDate departureDate;
+//    @Column(name = "departure_date", nullable = false)
+//    @NotNull(message = "Departure date is required")
+//    @Future(message = "Departure date must be in the future")
+//    private LocalDate departureDate;
 
     @NotNull(message = "Available slots are required")
     @Min(value = 1, message = "Available slots must be at least 1")

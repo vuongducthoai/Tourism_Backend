@@ -16,7 +16,7 @@ public class TourResponseDTO {
     private String endPointName;
     private String transportation;
     private String duration;
-    private List<LocalDate> departureDate;
+    private List<TourDepartureDateResponseDTO> departureDates;
     private Long money;
     private String image;
 }
