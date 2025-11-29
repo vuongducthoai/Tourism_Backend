@@ -1,6 +1,7 @@
 package com.tourism.backend.service;
 
 import com.tourism.backend.dto.TourCreateDTO;
+import com.tourism.backend.dto.response.TourCardResponseDTO;
 import com.tourism.backend.dto.response.TourDetailResponseDTO;
 import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
@@ -17,4 +18,5 @@ public interface TourService {
     Tour getTourByCode(String tourCode);
     List<TourResponseDTO> getAllToursForListDisplay();
     TourDetailResponseDTO getTourDetail(String tourCode);
+    public List<TourCardResponseDTO> getRelatedTours(String currentTourCode);
 }
