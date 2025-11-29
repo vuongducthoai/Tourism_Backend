@@ -1,7 +1,11 @@
 package com.tourism.backend.repository;
 
 import com.tourism.backend.entity.Tour;
+<
+import com.tourism.backend.repository.custom.TourRepositoryCustom;
+
 import org.springframework.data.domain.Pageable;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface TourRepository extends JpaRepository<Tour, Integer> {
+public interface TourRepository extends JpaRepository<Tour, Integer>, TourRepositoryCustom {
     Optional<Tour> findByTourCode(String tourCode);
     boolean existsByTourCode(String tourCode);
 
@@ -29,6 +33,23 @@ public interface TourRepository extends JpaRepository<Tour, Integer> {
     List<Tour> findAllToursForListDisplay();
 
 
+    /**
+     * ✨ PHƯƠNG THỨC MỚI: Lấy tất cả Tour, FETCH tất cả các mối quan hệ cần thiết
+     * (StartLocation, Departures, Pricings, Transports) để Service xử lý.
+     * Cần @Transactional ở Service.
+     */
+    @Query("""
+        SELECT t 
+        FROM Tour t
+        LEFT JOIN FETCH t.startLocation sl
+        LEFT JOIN FETCH t.departures td 
+        """)
+    List<Tour> findAllToursWithPricingAndTransport();
+
+
+
+
+
     @Query("SELECT t FROM Tour t " +
             "WHERE t.endLocation.locationID =:locationId " +
             "AND t.tourID <> :excludeTourId"
@@ -37,4 +58,5 @@ public interface TourRepository extends JpaRepository<Tour, Integer> {
                                 @Param("excludeTourId") Integer excludeTourId,
                                 Pageable pageable
                                 );
+
 }

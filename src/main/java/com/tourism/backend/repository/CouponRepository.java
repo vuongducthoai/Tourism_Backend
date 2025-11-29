@@ -14,6 +14,7 @@ import java.util.Optional;
 
 @Repository
 public interface CouponRepository extends JpaRepository<Coupon, Integer> {
+
         @Query("SELECT c FROM Coupon c WHERE " +
                 "c.isDeleted = false " +
                 "AND c.tourDeparture IS NULL " +
@@ -65,5 +66,6 @@ public interface CouponRepository extends JpaRepository<Coupon, Integer> {
                 @Param("orderValue") BigDecimal orderValue,
                 @Param("now") LocalDateTime now
         );
+
 
 }

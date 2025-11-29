@@ -2,7 +2,13 @@ package com.tourism.backend.service.impl;
 
 import com.tourism.backend.convert.LocationConverter;
 import com.tourism.backend.convert.TourConvert;
+import com.tourism.backend.convert.TourSpecialConvert;
 import com.tourism.backend.dto.TourCreateDTO;
+import com.tourism.backend.dto.requestDTO.SearchToursRequestDTO;
+import com.tourism.backend.dto.response.DepartureDTO;
+import com.tourism.backend.dto.response.DeparturePricingDTO;
+import com.tourism.backend.dto.response.TourDetailResponseDTO;
+import com.tourism.backend.dto.response.TransportDTO;
 import com.tourism.backend.dto.response.*;
 import com.tourism.backend.dto.responseDTO.TourDepartureDateResponseDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
@@ -49,6 +55,7 @@ public class TourServiceImpl implements TourService {
     private final CouponRepository couponRepository;
     private final LocationService locationService;
     private final LocationConverter locationConverter;
+    private final TourSpecialConvert tourSpecialConvert;
     @Override // Ghi đè phương thức từ Interface
     @Transactional
     public Tour createTourWithImages(TourCreateDTO dto) throws IOException {
@@ -545,5 +552,30 @@ public class TourServiceImpl implements TourService {
                     .build());
         }
         return response;
+
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TourSpecialResponseDTO> getTop10DeepestDiscountTours() {
+        List<Tour> tours = tourRepository.findAllToursWithPricingAndTransport();
+        return tours.stream()
+                .flatMap(tour -> tour.getDepartures().stream())
+                .map(TourSpecialConvert.DiscountInfo::new)
+                .filter(info -> info.discountValue.compareTo(BigDecimal.ZERO) > 0)
+                .sorted(Comparator.comparing(info -> info.discountValue, Comparator.reverseOrder()))
+                .limit(10)
+                .map(tourSpecialConvert::mapToTourSpecialResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TourResponseDTO> searchTours(SearchToursRequestDTO dto) {
+        List<Tour> tours = tourRepository.searchToursDynamically(dto);
+
+        return tours.stream()
+                .map(tourConvert::convertToTourReponsetoryDTO)
+                .collect(Collectors.toList());
+    }
+
 }
