@@ -31,6 +31,9 @@ public class Coupon extends BaseEntity{
     @Pattern(regexp = "^[A-Z0-9]+$", message = "Coupon code must be uppercase alphanumeric without spaces")
     private String couponCode;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @NotNull(message = "Discount amount is required")
     @Min(value = 1, message = "Discount amount must be greater than 0")
     private Integer discountAmount;

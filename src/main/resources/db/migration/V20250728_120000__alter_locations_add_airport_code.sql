@@ -1,6 +1,3 @@
--- 1. Thêm cột
-ALTER TABLE locations ADD COLUMN airport_code VARCHAR(10);
-
 -- 2. Cập nhật mã sân bay cho các địa điểm
 UPDATE locations SET airport_code = 'SGN' WHERE slug = 'ho-chi-minh'; -- Tân Sơn Nhất
 UPDATE locations SET airport_code = 'HAN' WHERE slug = 'ha-noi';      -- Nội Bài

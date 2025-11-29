@@ -1,8 +1,10 @@
 package com.tourism.backend.repository;
 
 import com.tourism.backend.entity.Tour;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -25,4 +27,14 @@ public interface TourRepository extends JpaRepository<Tour, Integer> {
         WHERE img.isMainImage = TRUE OR img IS NULL
         """)
     List<Tour> findAllToursForListDisplay();
+
+
+    @Query("SELECT t FROM Tour t " +
+            "WHERE t.endLocation.locationID =:locationId " +
+            "AND t.tourID <> :excludeTourId"
+    )
+    List<Tour> findRelatedTours(@Param("locationId") Integer locationId,
+                                @Param("excludeTourId") Integer excludeTourId,
+                                Pageable pageable
+                                );
 }

@@ -38,10 +38,7 @@ public class BookingPassenger extends BaseEntity{
     @Pattern(regexp = "^(ADULT|CHILD|INFANT)$")
     private String passengerType;
 
-    //Giá gốc niêm yết (Ví dụ: 5.000.000)
-    private BigDecimal originalPrice;
-
-    // Giá thực bán tại thời điểm đặt (Ví dụ: 4.000.000)
+    // Giá thực bán tại thời điểm đặt (VD: 4.000.000)
     @NotNull
     private BigDecimal basePrice;
 

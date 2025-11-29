@@ -2,6 +2,8 @@ package com.tourism.backend.controller;
 
 import com.tourism.backend.dto.TourCreateDTO;
 import com.tourism.backend.dto.requestDTO.RegionRequestDTO;
+import com.tourism.backend.dto.response.TourCardResponseDTO;
+import com.tourism.backend.dto.response.TourDetailResponseDTO;
 import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
 import com.tourism.backend.dto.responseDTO.ErrorResponseDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
@@ -33,20 +35,6 @@ public class TourController {
         }
     }
 
-    @GetMapping
-    public ResponseEntity<List<Tour>> getAllTours() {
-        return ResponseEntity.ok(tourService.getAllTours());
-    }
-
-    @GetMapping("/{tourCode}")
-    public ResponseEntity<?> getTourByCode(@PathVariable String tourCode) {
-        try {
-            Tour tour = tourService.getTourByCode(tourCode);
-            return ResponseEntity.ok(tour);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(404).body(e.getMessage());
-        }
-    }
     /**
      * API mới: Lấy tất cả các Tour theo định dạng TourReponsetory DTO.
      * HTTP GET /api/tours/display
@@ -65,4 +53,14 @@ public class TourController {
         }
     }
 
+    @GetMapping("/{tourCode}")
+    public ResponseEntity<TourDetailResponseDTO> getTourDetail(@PathVariable String tourCode){
+        TourDetailResponseDTO responseDTO = tourService.getTourDetail(tourCode);
+        return ResponseEntity.ok(responseDTO);
+    }
+
+    @GetMapping("/related/{tourCode}")
+    public ResponseEntity<List<TourCardResponseDTO>> getRelatedTours(@PathVariable String tourCode) {
+        return ResponseEntity.ok(tourService.getRelatedTours(tourCode));
+    }
 }
