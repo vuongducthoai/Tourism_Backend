@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "payments")
@@ -23,6 +24,9 @@ public class Payment extends BaseEntity{
 
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
+
+    @Column(name = "time_limit")
+    private LocalDateTime timeLimit;
 
     // OneToOne with Booking
     @OneToOne(fetch = FetchType.LAZY)
