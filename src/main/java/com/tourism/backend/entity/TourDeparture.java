@@ -28,6 +28,9 @@ public class TourDeparture extends BaseEntity{
     @Future(message = "Departure date must be in the future")
     private LocalDate departureDate;
 
+    @Column(name = "status")
+    private Boolean status = true;
+
     @NotNull(message = "Available slots are required")
     @Min(value = 1, message = "Available slots must be at least 1")
     private Integer availableSlots;
