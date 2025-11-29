@@ -2,6 +2,7 @@ package com.tourism.backend.service;
 
 import com.tourism.backend.dto.TourCreateDTO;
 import com.tourism.backend.dto.requestDTO.SearchToursRequestDTO;
+import com.tourism.backend.dto.response.TourCardResponseDTO;
 import com.tourism.backend.dto.response.TourDetailResponseDTO;
 import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
@@ -21,4 +22,5 @@ public interface TourService {
     TourDetailResponseDTO getTourDetail(String tourCode);
     List<TourSpecialResponseDTO> getTop10DeepestDiscountTours();
     List<TourResponseDTO> searchTours(SearchToursRequestDTO dto);
+    public List<TourCardResponseDTO> getRelatedTours(String currentTourCode);
 }

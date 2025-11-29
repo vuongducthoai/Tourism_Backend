@@ -64,7 +64,7 @@ public class Booking extends BaseEntity{
     @Min(0)
     private BigDecimal subtotalPrice;
 
-    private BigDecimal surcharge;
+    private BigDecimal surcharge; //
 
     //So tien duoc giam gia tu Coupon
     @Column(name = "coupon_discount", nullable = false)

@@ -34,4 +34,6 @@ public interface LocationRepository extends JpaRepository<Location, Integer> {
         FROM Tour t
         """)
     List<Location> findUniqueStartLocations();
+
+    Optional<Location> findByAirportCode(String airportCode);
 }

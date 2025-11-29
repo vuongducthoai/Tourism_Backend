@@ -37,6 +37,9 @@ public class Location extends BaseEntity{
     @Column(name = "airport_code", length = 10)
     private String airportCode;
 
+    @Column(name = "airport_name")
+    private String airportName;
+
     @OneToMany(mappedBy = "startLocation")
     @JsonIgnore
     private List<Tour> startPoint;

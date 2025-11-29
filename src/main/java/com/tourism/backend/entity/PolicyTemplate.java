@@ -24,7 +24,13 @@ public class PolicyTemplate extends BaseEntity{
     @NotBlank(message = "The policy template name cannot be empty")
     @Size(max = 255)
     @Column(name = "template_name", unique = true, nullable = false)
-    private String templateName;  //"Chính sách Tour Biển 2025" hay "Chính sách Tour Nước Ngoài" để chọn trong Dropdown.
+    private String templateName;
+
+    @Column(columnDefinition = "TEXT")
+    private String tourPriceIncludes;
+
+    @Column(columnDefinition = "TEXT")
+    private String tourPriceExcludes;
 
     @Column(columnDefinition = "TEXT")
     private String childPricingNotes;

@@ -15,8 +15,8 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
   flyway:
-    enabled: false
-    baseline-on-migrate: false
+    enabled: true
+    baseline-on-migrate: true
     baseline-version: 0
 
 
@@ -42,5 +42,5 @@ cloudinary:
   api-secret: WPzZSJqg4MVvHKUuvPFeHL981J0
 
 app:
-  frontend:
-    url: http://localhost:3000/reset-password
+  cors:
+    allowed-origins: http://localhost:3000, http://mydomain.com

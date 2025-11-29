@@ -1,9 +1,14 @@
 package com.tourism.backend.repository;
 
 import com.tourism.backend.entity.Tour;
+<
 import com.tourism.backend.repository.custom.TourRepositoryCustom;
+
+import org.springframework.data.domain.Pageable;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -27,6 +32,7 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
         """)
     List<Tour> findAllToursForListDisplay();
 
+
     /**
      * ✨ PHƯƠNG THỨC MỚI: Lấy tất cả Tour, FETCH tất cả các mối quan hệ cần thiết
      * (StartLocation, Departures, Pricings, Transports) để Service xử lý.
@@ -41,5 +47,16 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
     List<Tour> findAllToursWithPricingAndTransport();
 
 
+
+
+
+    @Query("SELECT t FROM Tour t " +
+            "WHERE t.endLocation.locationID =:locationId " +
+            "AND t.tourID <> :excludeTourId"
+    )
+    List<Tour> findRelatedTours(@Param("locationId") Integer locationId,
+                                @Param("excludeTourId") Integer excludeTourId,
+                                Pageable pageable
+                                );
 
 }
