@@ -14,4 +14,5 @@ public class LocationResponseDTO {
     private Integer locationID;
     private String name;
     private String imageUrl;
+    private String description;
 }

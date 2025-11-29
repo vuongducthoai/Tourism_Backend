@@ -7,6 +7,7 @@ import com.tourism.backend.entity.DepartureTransport; // 👈 Import DepartureTr
 import com.tourism.backend.entity.Tour;
 import com.tourism.backend.entity.TourDeparture;
 import com.tourism.backend.entity.TourImage;
+import com.tourism.backend.enums.PassengerType;
 import com.tourism.backend.enums.TransportType;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ public class TourConvert {
      */
     public TourResponseDTO convertToTourReponsetoryDTO(Tour tour) {
         TourResponseDTO dto = modelMapper.map(tour, TourResponseDTO.class);
-        dto.setEndPointName(tour.getEndLocation().getName());
+        dto.setStartPointName(tour.getStartLocation().getName());
 
         if (tour.getImages() != null && !tour.getImages().isEmpty()) {
             Optional<TourImage> mainImageOpt = tour.getImages().stream()
@@ -70,21 +71,22 @@ public class TourConvert {
 
             dto.setDepartureDates(departureDates);
 
-            // b) Lấy Giá Thấp Nhất (Giá ADULT thấp nhất trong tất cả các DeparturePricing)
+// b) Lấy Giá Thấp Nhất (originalPrice của ADULT thấp nhất trong tất cả các DeparturePricing)
             Long minPrice = tour.getDepartures().stream()
                     .flatMap(departure -> departure.getPricings().stream())
-                    .filter(p -> "ADULT".equals(p.getPassengerType()))
-                    .map(DeparturePricing::getSalePrice)
+                    .filter(p -> p.getPassengerType() == PassengerType.ADULT) // <-- Dùng Enum PassengerType.ADULT
+                    // Map sang originalPrice (BigDecimal)
+                    .map(DeparturePricing::getOriginalPrice)
+                    // Tìm giá trị nhỏ nhất (min)
                     .min(BigDecimal::compareTo)
+                    // Chuyển BigDecimal sang Long (hoặc 0L nếu không tìm thấy)
                     .map(BigDecimal::longValue)
                     .orElse(0L);
-
-            dto.setMoney(minPrice);
+            dto.setMoney(minPrice); // <-- Gán giá trị minPrice đã tìm được
         } else {
             dto.setMoney(0L);
-            dto.setDepartureDates(List.of()); // 👈 Set DTO mới
+            dto.setDepartureDates(List.of());
         }
-
         return dto;
     }
 }

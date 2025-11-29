@@ -2,9 +2,11 @@ package com.tourism.backend.controller;
 
 import com.tourism.backend.dto.TourCreateDTO;
 import com.tourism.backend.dto.requestDTO.RegionRequestDTO;
+import com.tourism.backend.dto.requestDTO.SearchToursRequestDTO;
 import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
 import com.tourism.backend.dto.responseDTO.ErrorResponseDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
+import com.tourism.backend.dto.responseDTO.TourSpecialResponseDTO;
 import com.tourism.backend.entity.Tour;
 import com.tourism.backend.service.TourService;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +49,7 @@ public class TourController {
             return ResponseEntity.status(404).body(e.getMessage());
         }
     }
+
     /**
      * API mới: Lấy tất cả các Tour theo định dạng TourReponsetory DTO.
      * HTTP GET /api/tours/display
@@ -61,6 +64,53 @@ public class TourController {
                     HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     "Internal Error",
                     "Lỗi khi lấy danh sách tour: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    @GetMapping("/deepest-discount")
+    public ResponseEntity<?> getTop10DeepestDiscountTours() {
+        try {
+            List<TourSpecialResponseDTO> tours = tourService.getTop10DeepestDiscountTours();
+            return ResponseEntity.ok(tours);
+
+        } catch (Exception e) {
+            // 1. Log lỗi ra console/file log
+            System.err.println("Lỗi khi lấy danh sách tour giảm giá sâu nhất: " + e.getMessage());
+
+            // 2. Tạo đối tượng ErrorResponseDTO với HTTP Status 500
+            ErrorResponseDTO error = new ErrorResponseDTO(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "Internal Server Error",
+                    "Không thể xử lý yêu cầu lấy tour giảm giá. Chi tiết: " + e.getMessage()
+            );
+
+            // 3. Trả về phản hồi 500 kèm theo ErrorResponseDTO
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(error);
+        }
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchTours(
+            // Nhận DTO duy nhất (tự động ánh xạ từ URL parameters)
+            @ModelAttribute SearchToursRequestDTO dto
+    ) {
+        try {
+            // DTO chứa tất cả thông tin tìm kiếm
+            List<TourResponseDTO> tours = tourService.searchTours(dto);
+
+            if (tours.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.OK).body("Không tìm thấy tour nào phù hợp với điều kiện lọc.");
+            }
+
+            return ResponseEntity.ok(tours);
+        } catch (Exception e) {
+            ErrorResponseDTO error = new ErrorResponseDTO(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "Internal Error",
+                    "Lỗi khi thực hiện tìm kiếm tour: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }

@@ -13,7 +13,7 @@ public class TourResponseDTO {
     private Integer tourID;
     private String tourCode;
     private String tourName;
-    private String endPointName;
+    private String startPointName;
     private String transportation;
     private String duration;
     private List<TourDepartureDateResponseDTO> departureDates;

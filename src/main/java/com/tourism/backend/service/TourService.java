@@ -1,9 +1,11 @@
 package com.tourism.backend.service;
 
 import com.tourism.backend.dto.TourCreateDTO;
+import com.tourism.backend.dto.requestDTO.SearchToursRequestDTO;
 import com.tourism.backend.dto.response.TourDetailResponseDTO;
 import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
+import com.tourism.backend.dto.responseDTO.TourSpecialResponseDTO;
 import com.tourism.backend.entity.Tour;
 import com.tourism.backend.enums.Region;
 
@@ -17,4 +19,6 @@ public interface TourService {
     Tour getTourByCode(String tourCode);
     List<TourResponseDTO> getAllToursForListDisplay();
     TourDetailResponseDTO getTourDetail(String tourCode);
+    List<TourSpecialResponseDTO> getTop10DeepestDiscountTours();
+    List<TourResponseDTO> searchTours(SearchToursRequestDTO dto);
 }

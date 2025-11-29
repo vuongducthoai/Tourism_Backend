@@ -22,6 +22,7 @@ public class SecurityConfig {
                         // Cho phép truy cập tự do vào API tạo tour (để test)
                         .requestMatchers("/api/tours/**").permitAll()
                         .requestMatchers("/api/locations/**").permitAll()
+                        .requestMatchers("/api/users/**").permitAll()
 
                         // Các API khác thì phải đăng nhập (nếu sau này làm login)
                         .anyRequest().authenticated()

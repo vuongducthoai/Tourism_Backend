@@ -2,13 +2,18 @@ package com.tourism.backend.service.impl;
 
 import com.tourism.backend.convert.LocationConverter;
 import com.tourism.backend.convert.TourConvert;
+import com.tourism.backend.convert.TourSpecialConvert;
 import com.tourism.backend.dto.TourCreateDTO;
+import com.tourism.backend.dto.requestDTO.SearchToursRequestDTO;
 import com.tourism.backend.dto.response.DepartureDTO;
 import com.tourism.backend.dto.response.DeparturePricingDTO;
 import com.tourism.backend.dto.response.TourDetailResponseDTO;
 import com.tourism.backend.dto.response.TransportDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
+import com.tourism.backend.dto.responseDTO.TourSpecialResponseDTO;
 import com.tourism.backend.entity.*;
+import com.tourism.backend.enums.PassengerType;
+import com.tourism.backend.enums.TransportType;
 import com.tourism.backend.repository.CouponRepository;
 import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
 import com.tourism.backend.entity.Location;
@@ -27,8 +32,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,6 +49,7 @@ public class TourServiceImpl implements TourService {
     private CouponRepository couponRepository;
     private final LocationService locationService;
     private final LocationConverter locationConverter;
+    private final TourSpecialConvert tourSpecialConvert;
     @Override // Ghi đè phương thức từ Interface
     @Transactional
     public Tour createTourWithImages(TourCreateDTO dto) throws IOException {
@@ -136,51 +144,75 @@ public class TourServiceImpl implements TourService {
     @Override
     @Transactional(readOnly = true)
     public TourDetailResponseDTO getTourDetail(String tourCode) {
-        Tour tour = tourRepository.findByTourCode(tourCode)
-                .orElseThrow(() -> new RuntimeException("Tour not found: " + tourCode));
-
-        //Handle list departure and pricing
-        List<DepartureDTO> departureDTOs = new ArrayList<>();
-        DeparturePricingDTO pricingDTO = new DeparturePricingDTO();
-        LocalDate today = LocalDate.now();
-
-        //"Best trip" (Closest) put on Header
-        DepartureDTO nearestDeparture = null;
-
-        for(TourDeparture dep : tour.getDepartures()){
-            if(dep.getDepartureDate().isBefore(today)) continue;
-
-            List<TransportDTO> transportDTOS = dep.getTransports().stream()
-                    .map(t -> TransportDTO.builder()
-                            .type(t.getType().name())
-                            .transportCode(t.getTransportCode())
-                            .startPoint(t.getStartPoint())
-                            .endPoint(t.getEndPoint())
-                            .departTime(t.getDepartTime())
-                            .arrivalTime(t.getArrivalTime())
-                            .build())
-                    .collect(Collectors.toList());
-
-            //Map pricing
-            List<DeparturePricingDTO> pricings = dep.getPricings().stream()
-                    .map(p -> DeparturePricingDTO.builder()
-                            .passengerType(p.getPassengerType().name())
-                            .ageDescription(p.getAgeDescription())
-                            .originalPrice(p.getOriginalPrice())
-                            .salePrice(p.getSalePrice())
-                            .build())
-                    .collect(Collectors.toList());
-
-            //FIND THE BEST COUPON FOR THIS TRIP
-            String bestCode = null;
-            BigDecimal discount = BigDecimal.ZERO;
-
-            BigDecimal adultPrice = pricings.stream()
-                    .filter(p -> "ADULT".equals(p.getPassengerType()))
-                    .findFirst().map(DeparturePricingDTO::getSalePrice)
-                    .orElse(BigDecimal.ZERO);
-
-        }
+//        Tour tour = tourRepository.findByTourCode(tourCode)
+//                .orElseThrow(() -> new RuntimeException("Tour not found: " + tourCode));
+//
+//        //Handle list departure and pricing
+//        List<DepartureDTO> departureDTOs = new ArrayList<>();
+//        DeparturePricingDTO pricingDTO = new DeparturePricingDTO();
+//        LocalDate today = LocalDate.now();
+//
+//        //"Best trip" (Closest) put on Header
+//        DepartureDTO nearestDeparture = null;
+//
+//        for(TourDeparture dep : tour.getDepartures()){
+//            if(dep.getDepartureDate().isBefore(today)) continue;
+//
+//            List<TransportDTO> transportDTOS = dep.getTransports().stream()
+//                    .map(t -> TransportDTO.builder()
+//                            .type(t.getType().name())
+//                            .transportCode(t.getTransportCode())
+//                            .startPoint(t.getStartPoint())
+//                            .endPoint(t.getEndPoint())
+//                            .departTime(t.getDepartTime())
+//                            .arrivalTime(t.getArrivalTime())
+//                            .build())
+//                    .collect(Collectors.toList());
+//
+//            //Map pricing
+//            List<DeparturePricingDTO> pricings = dep.getPricings().stream()
+//                    .map(p -> DeparturePricingDTO.builder()
+//                            .passengerType(p.getPassengerType().name())
+//                            .ageDescription(p.getAgeDescription())
+//                            .originalPrice(p.getOriginalPrice())
+//                            .salePrice(p.getSalePrice())
+//                            .build())
+//                    .collect(Collectors.toList());
+//
+//            //FIND THE BEST COUPON FOR THIS TRIP
+//            String bestCode = null;
+//            BigDecimal discount = BigDecimal.ZERO;
+//
+//            BigDecimal adultPrice = pricings.stream()
+//                    .filter(p -> "ADULT".equals(p.getPassengerType()))
+//                    .findFirst().map(DeparturePricingDTO::getSalePrice)
+//                    .orElse(BigDecimal.ZERO);
+//
+//        }
         return null;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TourSpecialResponseDTO> getTop10DeepestDiscountTours() {
+        List<Tour> tours = tourRepository.findAllToursWithPricingAndTransport();
+        return tours.stream()
+                .flatMap(tour -> tour.getDepartures().stream())
+                .map(TourSpecialConvert.DiscountInfo::new)
+                .filter(info -> info.discountValue.compareTo(BigDecimal.ZERO) > 0)
+                .sorted(Comparator.comparing(info -> info.discountValue, Comparator.reverseOrder()))
+                .limit(10)
+                .map(tourSpecialConvert::mapToTourSpecialResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TourResponseDTO> searchTours(SearchToursRequestDTO dto) {
+        List<Tour> tours = tourRepository.searchToursDynamically(dto);
+
+        return tours.stream()
+                .map(tourConvert::convertToTourReponsetoryDTO)
+                .collect(Collectors.toList());
+    }
+
 }
