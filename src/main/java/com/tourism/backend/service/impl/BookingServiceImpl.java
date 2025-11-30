@@ -1,10 +1,14 @@
 package com.tourism.backend.service.impl;
 
+import com.tourism.backend.convert.BookingConverter;
 import com.tourism.backend.dto.response.BookingFlightDTO;
 import com.tourism.backend.dto.response.CouponDTO;
 import com.tourism.backend.dto.response.TourBookingInfoDTO;
+import com.tourism.backend.dto.responseDTO.BookingResponseDTO;
 import com.tourism.backend.entity.*;
+import com.tourism.backend.enums.BookingStatus;
 import com.tourism.backend.enums.PassengerType;
+import com.tourism.backend.repository.BookingRepository;
 import com.tourism.backend.repository.CouponRepository;
 import com.tourism.backend.repository.LocationRepository;
 import com.tourism.backend.repository.TourDepartureRepository;
@@ -12,6 +16,7 @@ import com.tourism.backend.repository.TourRepository;
 import com.tourism.backend.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -26,6 +31,8 @@ public class BookingServiceImpl implements BookingService {
     private final TourDepartureRepository departureRepository;
     private final CouponRepository couponRepository;
     private final LocationRepository locationRepository;
+    private final BookingRepository bookingRepository;
+    private final BookingConverter bookingConverter;
 
     @Override
     public TourBookingInfoDTO getTourBookingInfo(String tourCode, Integer departureId) {
@@ -74,11 +81,11 @@ public class BookingServiceImpl implements BookingService {
 
             // 2. Lấy danh sách Coupon Global (Cho khách chọn thêm)
             List<Coupon> globalCoupons = couponRepository.findGlobalCoupons(now);
-                dto.setGlobalCoupons(
-                        globalCoupons.stream()
-                                .map(this::mapToCouponDTO)
-                                .collect(Collectors.toList())
-                );
+            dto.setGlobalCoupons(
+                    globalCoupons.stream()
+                            .map(this::mapToCouponDTO)
+                            .collect(Collectors.toList())
+            );
         }
         return dto;
     }
@@ -120,6 +127,15 @@ public class BookingServiceImpl implements BookingService {
         return locationRepository.findByAirportCode(locationCode)
                 .map(Location::getAirportName)
                 .orElse(locationCode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BookingResponseDTO> getAllBookingsByUser(Integer userID, BookingStatus bookingStatus) {
+        List<Booking> bookings = bookingRepository.findByUserIDWithDetails(userID, bookingStatus);
+        return bookings.stream()
+                .map(bookingConverter::convertToBookingResponseDTO)
+                .collect(Collectors.toList());
     }
 
 }
