@@ -25,6 +25,7 @@ public class BookingResponseDTO {
     private String customerNote;
     private Integer totalPassengers; // tổng số khách booking
     private BigDecimal surcharge; //
+    private BigDecimal subtotalPrice;
     private BigDecimal couponDiscount ;
     private BigDecimal paidByCoin;
     private BigDecimal totalPrice;

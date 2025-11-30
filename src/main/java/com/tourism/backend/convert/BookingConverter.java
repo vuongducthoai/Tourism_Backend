@@ -37,6 +37,7 @@ public class BookingConverter {
         dto.setPaidByCoin(booking.getPaidByCoin());
         dto.setTotalPrice(booking.getTotalPrice());
         dto.setCancelReason(booking.getCancelReason());
+        dto.setSubtotalPrice(booking.getSubtotalPrice());
 
         // Convert bookingStatus enum sang String
         if (booking.getBookingStatus() != null) {
