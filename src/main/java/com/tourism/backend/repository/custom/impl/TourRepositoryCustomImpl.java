@@ -46,13 +46,13 @@ public class TourRepositoryCustomImpl implements TourRepositoryCustom {
             AND (:endLocIdParam IS NULL OR t.endLocation.locationID = :endLocIdParam)
             
             AND (:transportationParam IS NULL OR t.transportation LIKE CONCAT('%', CAST(:transportationParam AS string), '%'))
-            
+            AND t.status = TRUE
             AND t.tourID IN (
                 SELECT td_sub.tour.tourID
                 FROM TourDeparture td_sub
                 JOIN td_sub.pricings dp_sub
                 WHERE dp_sub.passengerType = com.tourism.backend.enums.PassengerType.ADULT
-                
+                AND td_sub.status = TRUE
                 GROUP BY td_sub.tour.tourID 
                 
                 HAVING (

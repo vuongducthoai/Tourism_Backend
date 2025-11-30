@@ -28,7 +28,8 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
         FROM Tour t
         LEFT JOIN FETCH t.startLocation sl
         LEFT JOIN FETCH t.images img 
-        WHERE img.isMainImage = TRUE OR img IS NULL
+        WHERE (img.isMainImage = TRUE OR img IS NULL)
+        AND t.status = TRUE      
         """)
     List<Tour> findAllToursForListDisplay();
 
@@ -43,6 +44,7 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
         FROM Tour t
         LEFT JOIN FETCH t.startLocation sl
         LEFT JOIN FETCH t.departures td 
+        WHERE t.status = TRUE
         """)
     List<Tour> findAllToursWithPricingAndTransport();
 
