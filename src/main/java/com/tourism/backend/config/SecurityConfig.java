@@ -25,6 +25,8 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/users/**").permitAll()
                         .requestMatchers("/api/bookings/**").permitAll()
+                        .requestMatchers("/api/reviews/**").permitAll()
+
 
                         // Các API khác thì phải đăng nhập (nếu sau này làm login)
                         .anyRequest().authenticated()
