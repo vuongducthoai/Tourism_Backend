@@ -58,11 +58,6 @@ public class Coupon extends BaseEntity{
     @JoinColumn(name = "departure_id")
     private TourDeparture tourDeparture;
 
-    //(Để biết mã này đã được dùng trong những đơn nào)
-    @OneToMany(mappedBy = "coupon")
-    @JsonIgnore
-    private List<Booking> usedInBookings;
-
     public boolean isValid() {
         LocalDateTime now = LocalDateTime.now();
         return (startDate == null || now.isAfter(startDate)) &&

@@ -8,11 +8,13 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "users")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
@@ -26,7 +28,7 @@ public class User extends BaseEntity{
     @Size(max = 100)
     private String fullName;
 
-    @NotBlank(message = "Phone number is required")
+//    @NotBlank(message = "Phone number is required")
     @Pattern(regexp = "^\\d{10,11}$", message = "Phone number must be 10-11 digits")
     private String phone;
 
@@ -49,6 +51,27 @@ public class User extends BaseEntity{
     @Column(name = "coin_balance", nullable = false)
     @Min(value = 0, message = "Coin balance cannot be negative")
     private BigDecimal coinBalance = BigDecimal.ZERO;
+
+    @Column(name = "province_code", length = 10)
+    private String provinceCode;
+
+    @Column(name = "province_name", length = 100)
+    private String provinceName;
+
+    @Column(name = "district_code", length = 10)
+    private String districtCode;
+
+    @Column(name = "district_name", length = 100)
+    private String districtName;
+
+    @Column(name = "is_email_verified", nullable = false)
+    private Boolean isEmailVerified = false;
+
+    @Column(name = "verification_token")
+    private String verificationToken;
+
+    @Column(name = "verification_token_expiry")
+    private LocalDateTime verificationTokenExpiry;
 
     // --- Relationships ---
     @OneToMany(mappedBy = "user")

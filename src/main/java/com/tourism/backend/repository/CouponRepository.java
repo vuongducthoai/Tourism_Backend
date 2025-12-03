@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import javax.swing.text.html.Option;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +24,8 @@ public interface CouponRepository extends JpaRepository<Coupon, Integer> {
                 "AND c.usageCount < c.usageLimit " +
                 "ORDER BY c.discountAmount DESC")
         List<Coupon> findGlobalCoupons(@Param("now") LocalDateTime now);
+
+        Optional<Coupon> findByCouponCode(String couponCode);
 
         @Query("SELECT c FROM Coupon c WHERE " +
                 "c.isDeleted = false " +

@@ -24,7 +24,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: thoai12309@gmail.com
-#    password: kwmttdbfyzxniqdc
+    password: ldyb bfmi tsia hvsn
     properties:
       mail:
         smtp:
@@ -44,3 +44,17 @@ cloudinary:
 app:
   cors:
     allowed-origins: http://localhost:3000, http://mydomain.com
+  frontend:
+    url: http://localhost:3000
+
+vnpay:
+  tmn-code: 2Z2285VA
+  hash-secret: UUN1JEF3JCWQIRCMN76Q34RUQLRI4Q1J
+  api-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  return-url: http://localhost:8080/api/payment/vnpay-callback
+  version: 2.1.0
+  command: pay
+  order-type: other
+
+
+

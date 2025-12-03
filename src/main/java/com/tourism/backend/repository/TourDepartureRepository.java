@@ -1,6 +1,7 @@
 package com.tourism.backend.repository;
 
 import com.tourism.backend.entity.TourDeparture;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -17,4 +18,9 @@ public interface TourDepartureRepository extends JpaRepository<TourDeparture, In
             "AND t.departTime > CURRENT_TIMESTAMP " + // Lớn hơn thời điểm hiện tại
             "ORDER BY t.departTime ASC") // Sắp xếp tăng dần
     List<TourDeparture> findFutureDepartures(@Param("tourCode") String tourCode);
+
+    @Modifying
+    @Query("UPDATE TourDeparture t SET t.availableSlots = t.availableSlots - :amount " +
+            "WHERE t.departureID = :id AND t.availableSlots >= :amount")
+    int decreaseAvailableSlots(@Param("id") Integer id, @Param("amount") Integer amount);
 }
