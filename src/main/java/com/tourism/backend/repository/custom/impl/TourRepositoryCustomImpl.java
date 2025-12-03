@@ -24,7 +24,7 @@ public class TourRepositoryCustomImpl implements TourRepositoryCustom {
 
         BigDecimal minPrice = dto.getStartPrice() != null ? new BigDecimal(dto.getStartPrice()) : null;
         BigDecimal maxPrice = dto.getEndPrice() != null ? new BigDecimal(dto.getEndPrice()) : null;
-
+        Integer minRating = dto.getRating();
         String nameParam = dto.getSearchNameTour();
         String transportationParam = dto.getTransportation();
         Integer startLocIdParam = dto.getStartLocationID();
@@ -47,6 +47,13 @@ public class TourRepositoryCustomImpl implements TourRepositoryCustom {
             
             AND (:transportationParam IS NULL OR t.transportation LIKE CONCAT('%', CAST(:transportationParam AS string), '%'))
             AND t.status = TRUE
+            AND (:minRating IS NULL OR EXISTS (
+                            SELECT 1
+                            FROM Review r
+                            WHERE r.tour.tourID = t.tourID
+                            GROUP BY r.tour.tourID
+                            HAVING AVG(r.rating) >= :minRating
+                        ))
             AND t.tourID IN (
                 SELECT td_sub.tour.tourID
                 FROM TourDeparture td_sub
@@ -73,8 +80,8 @@ public class TourRepositoryCustomImpl implements TourRepositoryCustom {
                 .setParameter("minPrice", minPrice)
                 .setParameter("maxPrice", maxPrice)
                 .setParameter("startLocIdParam", startLocIdParam)
-                .setParameter("endLocIdParam", endLocIdParam);
-
+                .setParameter("endLocIdParam", endLocIdParam)
+                .setParameter("minRating", minRating);
         return query.getResultList();
     }
 }

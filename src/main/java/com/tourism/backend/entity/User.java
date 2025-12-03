@@ -41,6 +41,9 @@ public class User extends BaseEntity{
     @NotBlank(message = "Password is required")
     private String password;
 
+    @NotBlank(message = "Avatar is required")
+    private String avatar;
+
     private Boolean status = true;
 
     @Past(message = "Date of birth must be in the past")
