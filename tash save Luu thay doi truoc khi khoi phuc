@@ -1,0 +1,411 @@
+warning: in the working copy of 'src/main/java/com/tourism/backend/config/SecurityConfig.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main/java/com/tourism/backend/controller/BookingController.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main/java/com/tourism/backend/convert/TourConvert.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main/java/com/tourism/backend/convert/TourSpecialConvert.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main/java/com/tourism/backend/repository/TourRepository.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main/java/com/tourism/backend/repository/custom/impl/TourRepositoryCustomImpl.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main/java/com/tourism/backend/service/BookingService.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main/java/com/tourism/backend/service/impl/BookingServiceImpl.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/main/java/com/tourism/backend/service/impl/TourServiceImpl.java', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/src/main/java/com/tourism/backend/config/SecurityConfig.java b/src/main/java/com/tourism/backend/config/SecurityConfig.java[m
+[1mindex b444c6b..40cc79c 100644[m
+[1m--- a/src/main/java/com/tourism/backend/config/SecurityConfig.java[m
+[1m+++ b/src/main/java/com/tourism/backend/config/SecurityConfig.java[m
+[36m@@ -22,10 +22,7 @@[m [mpublic class SecurityConfig {[m
+                         // Cho phép truy cập tự do vào API tạo tour (để test)[m
+                         .requestMatchers("/api/tours/**").permitAll()[m
+                         .requestMatchers("/api/locations/**").permitAll()[m
+[31m-[m
+[31m-                        .requestMatchers("/api/users/**").permitAll()[m
+[31m-                        .requestMatchers("/api/bookings/**").permitAll()[m
+[31m-[m
+[32m+[m[32m                        .requestMatchers("/api/bookings/user/**").permitAll()[m
+                         // Các API khác thì phải đăng nhập (nếu sau này làm login)[m
+                         .anyRequest().authenticated()[m
+                 );[m
+[1mdiff --git a/src/main/java/com/tourism/backend/controller/BookingController.java b/src/main/java/com/tourism/backend/controller/BookingController.java[m
+[1mindex 96375c5..88328d1 100644[m
+[1m--- a/src/main/java/com/tourism/backend/controller/BookingController.java[m
+[1m+++ b/src/main/java/com/tourism/backend/controller/BookingController.java[m
+[36m@@ -1,14 +1,21 @@[m
+ package com.tourism.backend.controller;[m
+ [m
+ import com.tourism.backend.dto.response.TourBookingInfoDTO;[m
+[32m+[m[32mimport com.tourism.backend.dto.responseDTO.BookingResponseDTO;[m
+[32m+[m[32mimport com.tourism.backend.dto.responseDTO.ErrorResponseDTO;[m
+[32m+[m[32mimport com.tourism.backend.enums.BookingStatus;[m
+ import com.tourism.backend.service.BookingService;[m
+ import lombok.RequiredArgsConstructor;[m
+[32m+[m[32mimport org.springframework.http.HttpStatus;[m
+ import org.springframework.http.ResponseEntity;[m
+ import org.springframework.web.bind.annotation.GetMapping;[m
+[32m+[m[32mimport org.springframework.web.bind.annotation.PathVariable;[m
+ import org.springframework.web.bind.annotation.RequestMapping;[m
+ import org.springframework.web.bind.annotation.RequestParam;[m
+ import org.springframework.web.bind.annotation.RestController;[m
+ [m
+[32m+[m[32mimport java.util.List;[m
+[32m+[m
+ @RestController[m
+ @RequestMapping("/api/bookings")[m
+ @RequiredArgsConstructor[m
+[36m@@ -23,4 +30,30 @@[m [mpublic class BookingController {[m
+         TourBookingInfoDTO response = bookingService.getTourBookingInfo(tourCode, departureId);[m
+         return ResponseEntity.ok(response);[m
+     }[m
+[32m+[m
+[32m+[m[32m    @GetMapping("/user/{userID}")[m
+[32m+[m[32m    public ResponseEntity<?> getAllBookingsByUser([m
+[32m+[m[32m            @PathVariable Integer userID,[m
+[32m+[m[32m            @RequestParam(required = false) String bookingStatus[m
+[32m+[m[32m    ) {[m
+[32m+[m[32m        BookingStatus status = null;[m
+[32m+[m[32m        if (bookingStatus != null && !bookingStatus.trim().isEmpty()) {[m
+[32m+[m[32m            try {[m
+[32m+[m[32m                status = BookingStatus.valueOf(bookingStatus.toUpperCase());[m
+[32m+[m[32m            } catch (IllegalArgumentException e) {[m
+[32m+[m[32m                ErrorResponseDTO error = new ErrorResponseDTO([m
+[32m+[m[32m                        HttpStatus.BAD_REQUEST.value(),[m
+[32m+[m[32m                        "Bad Request",[m
+[32m+[m[32m                        "Invalid booking status: " + bookingStatus[m
+[32m+[m[32m                );[m
+[32m+[m[32m                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        // --- BỎ KHỐI TRY-CATCH LỚN ĐỂ LỖI GỐC ĐƯỢC IN RA ---[m
+[32m+[m[32m        List<BookingResponseDTO> bookings = bookingService.getAllBookingsByUser(userID, status);[m
+[32m+[m[32m        return ResponseEntity.ok(bookings);[m
+[32m+[m[32m        // --------------------------------------------------------[m
+[32m+[m[32m    }[m
+[32m+[m
+ }[m
+[1mdiff --git a/src/main/java/com/tourism/backend/controller/UserController.java b/src/main/java/com/tourism/backend/controller/UserController.java[m
+[1mdeleted file mode 100644[m
+[1mindex 1e29764..0000000[m
+[1m--- a/src/main/java/com/tourism/backend/controller/UserController.java[m
+[1m+++ /dev/null[m
+[36m@@ -1,66 +0,0 @@[m
+[31m-package com.tourism.backend.controller;[m
+[31m-[m
+[31m-import com.tourism.backend.dto.requestDTO.UserUpdateRequestDTO;[m
+[31m-import com.tourism.backend.dto.responseDTO.ErrorResponseDTO;[m
+[31m-import com.tourism.backend.dto.responseDTO.UserReaponseDTO;[m
+[31m-import com.tourism.backend.service.UserService;[m
+[31m-import lombok.RequiredArgsConstructor;[m
+[31m-import org.springframework.http.HttpStatus;[m
+[31m-import org.springframework.http.ResponseEntity;[m
+[31m-import org.springframework.web.bind.annotation.*;[m
+[31m-[m
+[31m-@RestController[m
+[31m-@RequestMapping("/api/users")[m
+[31m-@RequiredArgsConstructor[m
+[31m-public class UserController {[m
+[31m-[m
+[31m-    private final UserService userService;[m
+[31m-[m
+[31m-    @GetMapping("/{userID}")[m
+[31m-    public ResponseEntity<?> getUserById(@PathVariable Integer userID) {[m
+[31m-        try {[m
+[31m-            UserReaponseDTO user = userService.getUserById(userID);[m
+[31m-            return ResponseEntity.ok(user);[m
+[31m-        } catch (RuntimeException e) {[m
+[31m-            ErrorResponseDTO error = new ErrorResponseDTO([m
+[31m-                    HttpStatus.NOT_FOUND.value(),[m
+[31m-                    "Not Found",[m
+[31m-                    e.getMessage()[m
+[31m-            );[m
+[31m-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);[m
+[31m-        } catch (Exception e) {[m
+[31m-            ErrorResponseDTO error = new ErrorResponseDTO([m
+[31m-                    HttpStatus.INTERNAL_SERVER_ERROR.value(),[m
+[31m-                    "Internal Error",[m
+[31m-                    "Lỗi khi lấy thông tin user: " + e.getMessage()[m
+[31m-            );[m
+[31m-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);[m
+[31m-        }[m
+[31m-    }[m
+[31m-[m
+[31m-    @PutMapping("/{userID}")[m
+[31m-    public ResponseEntity<?> updateUser([m
+[31m-            @PathVariable Integer userID,[m
+[31m-            @RequestBody UserUpdateRequestDTO updateDTO[m
+[31m-    ) {[m
+[31m-        try {[m
+[31m-            UserReaponseDTO updatedUser = userService.updateUser(userID, updateDTO);[m
+[31m-            return ResponseEntity.ok(updatedUser);[m
+[31m-        } catch (RuntimeException e) {[m
+[31m-            ErrorResponseDTO error = new ErrorResponseDTO([m
+[31m-                    HttpStatus.NOT_FOUND.value(),[m
+[31m-                    "Not Found",[m
+[31m-                    e.getMessage()[m
+[31m-            );[m
+[31m-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);[m
+[31m-        } catch (Exception e) {[m
+[31m-            ErrorResponseDTO error = new ErrorResponseDTO([m
+[31m-                    HttpStatus.INTERNAL_SERVER_ERROR.value(),[m
+[31m-                    "Internal Error",[m
+[31m-                    "Lỗi khi cập nhật thông tin user: " + e.getMessage()[m
+[31m-            );[m
+[31m-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);[m
+[31m-        }[m
+[31m-    }[m
+[31m-}[m
+[31m-[m
+[1mdiff --git a/src/main/java/com/tourism/backend/convert/UserConverter.java b/src/main/java/com/tourism/backend/convert/UserConverter.java[m
+[1mdeleted file mode 100644[m
+[1mindex d37a7a6..0000000[m
+[1m--- a/src/main/java/com/tourism/backend/convert/UserConverter.java[m
+[1m+++ /dev/null[m
+[36m@@ -1,23 +0,0 @@[m
+[31m-package com.tourism.backend.convert;[m
+[31m-[m
+[31m-import com.tourism.backend.dto.responseDTO.UserReaponseDTO;[m
+[31m-import com.tourism.backend.entity.User;[m
+[31m-import lombok.RequiredArgsConstructor;[m
+[31m-import org.modelmapper.ModelMapper;[m
+[31m-import org.springframework.stereotype.Component;[m
+[31m-[m
+[31m-@Component[m
+[31m-@RequiredArgsConstructor[m
+[31m-public class UserConverter {[m
+[31m-[m
+[31m-    private final ModelMapper modelMapper;[m
+[31m-[m
+[31m-    /**[m
+[31m-     * Chuyển đổi Entity User sang UserResponseDTO[m
+[31m-     */[m
+[31m-    public UserReaponseDTO convertToUserResponseDTO(User user) {[m
+[31m-        return modelMapper.map(user, UserReaponseDTO.class);[m
+[31m-    }[m
+[31m-}[m
+[31m-[m
+[31m-[m
+[1mdiff --git a/src/main/java/com/tourism/backend/dto/requestDTO/UserUpdateRequestDTO.java b/src/main/java/com/tourism/backend/dto/requestDTO/UserUpdateRequestDTO.java[m
+[1mdeleted file mode 100644[m
+[1mindex 8e62cd5..0000000[m
+[1m--- a/src/main/java/com/tourism/backend/dto/requestDTO/UserUpdateRequestDTO.java[m
+[1m+++ /dev/null[m
+[36m@@ -1,20 +0,0 @@[m
+[31m-package com.tourism.backend.dto.requestDTO;[m
+[31m-[m
+[31m-import lombok.AllArgsConstructor;[m
+[31m-import lombok.Builder;[m
+[31m-import lombok.Data;[m
+[31m-import lombok.NoArgsConstructor;[m
+[31m-[m
+[31m-import java.time.LocalDate;[m
+[31m-[m
+[31m-@Data[m
+[31m-@NoArgsConstructor[m
+[31m-@AllArgsConstructor[m
+[31m-@Builder[m
+[31m-public class UserUpdateRequestDTO {[m
+[31m-    private String fullName;[m
+[31m-    private String phone;[m
+[31m-    private LocalDate dateOfBirth;[m
+[31m-}[m
+[31m-[m
+[31m-[m
+[1mdiff --git a/src/main/java/com/tourism/backend/entity/Booking.java b/src/main/java/com/tourism/backend/entity/Booking.java[m
+[1mindex a6051f8..a1c1afe 100644[m
+[1m--- a/src/main/java/com/tourism/backend/entity/Booking.java[m
+[1m+++ b/src/main/java/com/tourism/backend/entity/Booking.java[m
+[36m@@ -1,5 +1,6 @@[m
+ package com.tourism.backend.entity;[m
+ [m
+[32m+[m[32mimport com.fasterxml.jackson.annotation.JsonIgnore;[m
+ import com.tourism.backend.enums.BookingStatus;[m
+ import jakarta.persistence.*;[m
+ import jakarta.validation.constraints.Email;[m
+[36m@@ -94,6 +95,7 @@[m [mpublic class Booking extends BaseEntity{[m
+ [m
+     @ManyToOne(fetch = FetchType.LAZY)[m
+     @JoinColumn(name = "departure_id", nullable = false)[m
+[32m+[m[32m    @JsonIgnore[m
+     private TourDeparture tourDeparture;[m
+ [m
+     @ManyToOne(fetch = FetchType.LAZY)[m
+[1mdiff --git a/src/main/java/com/tourism/backend/enums/BookingStatus.java b/src/main/java/com/tourism/backend/enums/BookingStatus.java[m
+[1mindex 6424b69..fa42185 100644[m
+[1m--- a/src/main/java/com/tourism/backend/enums/BookingStatus.java[m
+[1m+++ b/src/main/java/com/tourism/backend/enums/BookingStatus.java[m
+[36m@@ -2,9 +2,11 @@[m [mpackage com.tourism.backend.enums;[m
+ [m
+ public enum BookingStatus {[m
+     PENDING_PAYMENT,[m
+[32m+[m[32m    OVERRDUE_PAYMENT,[m
+     PENDING_CONFIRMATION,[m
+     PAID,[m
+     CANCELLED,[m
+     PENDING_REVIEW,[m
+     REVIEWED[m
+[32m+[m
+ }[m
+[1mdiff --git a/src/main/java/com/tourism/backend/repository/UserRepository.java b/src/main/java/com/tourism/backend/repository/UserRepository.java[m
+[1mdeleted file mode 100644[m
+[1mindex 8514a17..0000000[m
+[1m--- a/src/main/java/com/tourism/backend/repository/UserRepository.java[m
+[1m+++ /dev/null[m
+[36m@@ -1,14 +0,0 @@[m
+[31m-package com.tourism.backend.repository;[m
+[31m-[m
+[31m-import com.tourism.backend.entity.User;[m
+[31m-import org.springframework.data.jpa.repository.JpaRepository;[m
+[31m-import org.springframework.stereotype.Repository;[m
+[31m-[m
+[31m-import java.util.Optional;[m
+[31m-[m
+[31m-@Repository[m
+[31m-public interface UserRepository extends JpaRepository<User, Integer> {[m
+[31m-    Optional<User> findByUserID(Integer userID);[m
+[31m-}[m
+[31m-[m
+[31m-[m
+[1mdiff --git a/src/main/java/com/tourism/backend/service/BookingService.java b/src/main/java/com/tourism/backend/service/BookingService.java[m
+[1mindex 0f37fa9..8ca2561 100644[m
+[1m--- a/src/main/java/com/tourism/backend/service/BookingService.java[m
+[1m+++ b/src/main/java/com/tourism/backend/service/BookingService.java[m
+[36m@@ -1,7 +1,13 @@[m
+ package com.tourism.backend.service;[m
+ [m
+ import com.tourism.backend.dto.response.TourBookingInfoDTO;[m
+[32m+[m[32mimport com.tourism.backend.dto.responseDTO.BookingResponseDTO;[m
+[32m+[m[32mimport com.tourism.backend.enums.BookingStatus;[m
+[32m+[m
+[32m+[m[32mimport java.util.List;[m
+ [m
+ public interface BookingService {[m
+     TourBookingInfoDTO getTourBookingInfo(String tourCode, Integer departureId);[m
+[32m+[m[41m    [m
+[32m+[m[32m    List<BookingResponseDTO> getAllBookingsByUser(Integer userID, BookingStatus bookingStatus);[m
+ }[m
+[1mdiff --git a/src/main/java/com/tourism/backend/service/UserService.java b/src/main/java/com/tourism/backend/service/UserService.java[m
+[1mdeleted file mode 100644[m
+[1mindex acad6db..0000000[m
+[1m--- a/src/main/java/com/tourism/backend/service/UserService.java[m
+[1m+++ /dev/null[m
+[36m@@ -1,10 +0,0 @@[m
+[31m-package com.tourism.backend.service;[m
+[31m-[m
+[31m-import com.tourism.backend.dto.requestDTO.UserUpdateRequestDTO;[m
+[31m-import com.tourism.backend.dto.responseDTO.UserReaponseDTO;[m
+[31m-[m
+[31m-public interface UserService {[m
+[31m-    UserReaponseDTO getUserById(Integer userID);[m
+[31m-    UserReaponseDTO updateUser(Integer userID, UserUpdateRequestDTO updateDTO);[m
+[31m-}[m
+[31m-[m
+[1mdiff --git a/src/main/java/com/tourism/backend/service/impl/BookingServiceImpl.java b/src/main/java/com/tourism/backend/service/impl/BookingServiceImpl.java[m
+[1mindex a7fc64d..e7186bc 100644[m
+[1m--- a/src/main/java/com/tourism/backend/service/impl/BookingServiceImpl.java[m
+[1m+++ b/src/main/java/com/tourism/backend/service/impl/BookingServiceImpl.java[m
+[36m@@ -1,10 +1,14 @@[m
+ package com.tourism.backend.service.impl;[m
+ [m
+[32m+[m[32mimport com.tourism.backend.convert.BookingConverter;[m
+ import com.tourism.backend.dto.response.BookingFlightDTO;[m
+ import com.tourism.backend.dto.response.CouponDTO;[m
+ import com.tourism.backend.dto.response.TourBookingInfoDTO;[m
+[32m+[m[32mimport com.tourism.backend.dto.responseDTO.BookingResponseDTO;[m
+ import com.tourism.backend.entity.*;[m
+[32m+[m[32mimport com.tourism.backend.enums.BookingStatus;[m
+ import com.tourism.backend.enums.PassengerType;[m
+[32m+[m[32mimport com.tourism.backend.repository.BookingRepository;[m
+ import com.tourism.backend.repository.CouponRepository;[m
+ import com.tourism.backend.repository.LocationRepository;[m
+ import com.tourism.backend.repository.TourDepartureRepository;[m
+[36m@@ -12,6 +16,7 @@[m [mimport com.tourism.backend.repository.TourRepository;[m
+ import com.tourism.backend.service.BookingService;[m
+ import lombok.RequiredArgsConstructor;[m
+ import org.springframework.stereotype.Service;[m
+[32m+[m[32mimport org.springframework.transaction.annotation.Transactional;[m
+ [m
+ import java.math.BigDecimal;[m
+ import java.time.LocalDateTime;[m
+[36m@@ -26,6 +31,8 @@[m [mpublic class BookingServiceImpl implements BookingService {[m
+     private final TourDepartureRepository departureRepository;[m
+     private final CouponRepository couponRepository;[m
+     private final LocationRepository locationRepository;[m
+[32m+[m[32m    private final BookingRepository bookingRepository;[m
+[32m+[m[32m    private final BookingConverter bookingConverter;[m
+ [m
+     @Override[m
+     public TourBookingInfoDTO getTourBookingInfo(String tourCode, Integer departureId) {[m
+[36m@@ -122,4 +129,13 @@[m [mpublic class BookingServiceImpl implements BookingService {[m
+                 .orElse(locationCode);[m
+     }[m
+ [m
+[32m+[m[32m    @Override[m
+[32m+[m[32m    @Transactional(readOnly = true)[m
+[32m+[m[32m    public List<BookingResponseDTO> getAllBookingsByUser(Integer userID, BookingStatus bookingStatus) {[m
+[32m+[m[32m        List<Booking> bookings = bookingRepository.findByUserIDWithDetails(userID, bookingStatus);[m
+[32m+[m[32m        return bookings.stream()[m
+[32m+[m[32m                .map(bookingConverter::convertToBookingResponseDTO)[m
+[32m+[m[32m                .collect(Collectors.toList());[m
+[32m+[m[32m    }[m
+[32m+[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/main/java/com/tourism/backend/service/impl/UserServiceImpl.java b/src/main/java/com/tourism/backend/service/impl/UserServiceImpl.java[m
+[1mdeleted file mode 100644[m
+[1mindex 258b5eb..0000000[m
+[1m--- a/src/main/java/com/tourism/backend/service/impl/UserServiceImpl.java[m
+[1m+++ /dev/null[m
+[36m@@ -1,56 +0,0 @@[m
+[31m-package com.tourism.backend.service.impl;[m
+[31m-[m
+[31m-import com.tourism.backend.convert.UserConverter;[m
+[31m-import com.tourism.backend.dto.requestDTO.UserUpdateRequestDTO;[m
+[31m-import com.tourism.backend.dto.responseDTO.ErrorResponseDTO;[m
+[31m-import com.tourism.backend.dto.responseDTO.UserReaponseDTO;[m
+[31m-import com.tourism.backend.entity.User;[m
+[31m-import com.tourism.backend.repository.UserRepository;[m
+[31m-import com.tourism.backend.service.UserService;[m
+[31m-import lombok.RequiredArgsConstructor;[m
+[31m-import org.springframework.http.HttpStatus;[m
+[31m-import org.springframework.stereotype.Service;[m
+[31m-import org.springframework.transaction.annotation.Transactional;[m
+[31m-[m
+[31m-@Service[m
+[31m-@RequiredArgsConstructor[m
+[31m-public class UserServiceImpl implements UserService {[m
+[31m-[m
+[31m-    private final UserRepository userRepository;[m
+[31m-    private final UserConverter userConverter;[m
+[31m-[m
+[31m-    @Override[m
+[31m-    @Transactional(readOnly = true)[m
+[31m-    public UserReaponseDTO getUserById(Integer userID) {[m
+[31m-        User user = userRepository.findByUserID(userID)[m
+[31m-                .orElseThrow(() -> new RuntimeException("Không tìm thấy user với ID: " + userID));[m
+[31m-        [m
+[31m-        return userConverter.convertToUserResponseDTO(user);[m
+[31m-    }[m
+[31m-[m
+[31m-    @Override[m
+[31m-    @Transactional[m
+[31m-    public UserReaponseDTO updateUser(Integer userID, UserUpdateRequestDTO updateDTO) {[m
+[31m-        User user = userRepository.findByUserID(userID)[m
+[31m-                .orElseThrow(() -> new RuntimeException("Không tìm thấy user với ID: " + userID));[m
+[31m-        [m
+[31m-        // Cập nhật các trường từ DTO[m
+[31m-        if (updateDTO.getFullName() != null && !updateDTO.getFullName().isEmpty()) {[m
+[31m-            user.setFullName(updateDTO.getFullName());[m
+[31m-        }[m
+[31m-        [m
+[31m-        if (updateDTO.getPhone() != null && !updateDTO.getPhone().isEmpty()) {[m
+[31m-            user.setPhone(updateDTO.getPhone());[m
+[31m-        }[m
+[31m-        [m
+[31m-        if (updateDTO.getDateOfBirth() != null) {[m
+[31m-            user.setDateOfBirth(updateDTO.getDateOfBirth());[m
+[31m-        }[m
+[31m-        [m
+[31m-        // Lưu user đã cập nhật[m
+[31m-        User updatedUser = userRepository.save(user);[m
+[31m-        [m
+[31m-        return userConverter.convertToUserResponseDTO(updatedUser);[m
+[31m-    }[m
+[31m-}[m
+[31m-[m

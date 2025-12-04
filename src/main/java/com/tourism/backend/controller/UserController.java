@@ -6,8 +6,12 @@ import com.tourism.backend.dto.responseDTO.UserReaponseDTO;
 import com.tourism.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+
 
 @RestController
 @RequestMapping("/api/users")
@@ -38,14 +42,22 @@ public class UserController {
         }
     }
 
-    @PutMapping("/{userID}")
+    @PutMapping(value = "/{userID}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // ✨ CẬP NHẬT: Cho phép gửi file ✨
     public ResponseEntity<?> updateUser(
             @PathVariable Integer userID,
-            @RequestBody UserUpdateRequestDTO updateDTO
+            @ModelAttribute UserUpdateRequestDTO updateDTO
     ) {
         try {
+            // Service sẽ ném IOException nếu upload Cloudinary thất bại
             UserReaponseDTO updatedUser = userService.updateUser(userID, updateDTO);
             return ResponseEntity.ok(updatedUser);
+        } catch (IOException e) { // Bắt lỗi IOException nếu có khi upload Cloudinary
+            ErrorResponseDTO error = new ErrorResponseDTO(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "Upload Error",
+                    "Lỗi khi upload ảnh Avatar: " + e.getMessage()
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         } catch (RuntimeException e) {
             ErrorResponseDTO error = new ErrorResponseDTO(
                     HttpStatus.NOT_FOUND.value(),
