@@ -17,5 +17,6 @@ public class UserReaponseDTO {
     private LocalDate dateOfBirth;
     private BigDecimal coinBalance;
     private String email;
+    private String avatar;
 }
 

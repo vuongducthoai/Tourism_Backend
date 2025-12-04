@@ -18,36 +18,25 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
     Optional<Tour> findByTourCode(String tourCode);
     boolean existsByTourCode(String tourCode);
 
-    /**
-     * Lấy tất cả Tour, JOIN FETCH Location và Main Image.
-     * Cần @Transactional ở Service để truy cập Lazy Collections (departures, pricings) sau này.
-     */
+ 
     @Query("""
         SELECT t 
         FROM Tour t
         LEFT JOIN FETCH t.startLocation sl
         LEFT JOIN FETCH t.images img 
-        WHERE img.isMainImage = TRUE OR img IS NULL
+        WHERE (img.isMainImage = TRUE OR img IS NULL)
+        AND t.status = TRUE      
         """)
     List<Tour> findAllToursForListDisplay();
 
-
-    /**
-     * ✨ PHƯƠNG THỨC MỚI: Lấy tất cả Tour, FETCH tất cả các mối quan hệ cần thiết
-     * (StartLocation, Departures, Pricings, Transports) để Service xử lý.
-     * Cần @Transactional ở Service.
-     */
     @Query("""
         SELECT t 
         FROM Tour t
         LEFT JOIN FETCH t.startLocation sl
         LEFT JOIN FETCH t.departures td 
+        WHERE t.status = TRUE
         """)
     List<Tour> findAllToursWithPricingAndTransport();
-
-
-
-
 
     @Query("SELECT t FROM Tour t " +
             "WHERE t.endLocation.locationID =:locationId " +
@@ -57,5 +46,4 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
                                 @Param("excludeTourId") Integer excludeTourId,
                                 Pageable pageable
                                 );
-
 }

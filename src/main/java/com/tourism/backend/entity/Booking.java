@@ -104,4 +104,8 @@ public class Booking extends BaseEntity{
 
     @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
     private List<BookingPassenger> passengers;
+
+
+    @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private RefundInformation refundInformation;
 }

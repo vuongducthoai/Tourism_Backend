@@ -35,6 +35,9 @@ public class Payment extends BaseEntity{
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
+    @Column(name = "time_limit")
+    private LocalDateTime timeLimit;
+
     // OneToOne with Booking
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id", unique = true)

@@ -64,6 +64,9 @@ public class Tour extends BaseEntity{
     @Column(name = "ideal_time")
     private String idealTime;
 
+    @Column(name = "status")
+    private Boolean status = true;
+
     @Column(name = "trip_transportation")
     private String tripTransportation;
 

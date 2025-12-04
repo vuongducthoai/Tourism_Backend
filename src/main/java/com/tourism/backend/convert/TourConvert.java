@@ -43,19 +43,29 @@ public class TourConvert {
         } else {
             dto.setImage(null);
         }
-
+        LocalDate today = LocalDate.now();
         // 4. Lấy Danh sách Ngày Khởi Hành (departureDates) & Giá Thấp Nhất (money)
         if (tour.getDepartures() != null && !tour.getDepartures().isEmpty()) {
 
             // a) Lấy Danh sách Ngày Khởi Hành (List<TourDepartureDateResponseDTO>)
+            // a) Lấy Danh sách Ngày Khởi Hành (List<TourDepartureDateResponseDTO>)
+            // Điều kiện:
+            // 1. TourDeparture.status = true
+            // 2. Có DepartureTransport với type = OUTBOUND (chiều đi)
+            // 3. Ngày khởi hành (departTime.toLocalDate()) phải trong tương lai
             List<TourDepartureDateResponseDTO> departureDates = tour.getDepartures().stream()
+                    // Bước 1: Lọc departure có status = true
+                    .filter(departure -> departure.getStatus() != null && departure.getStatus())
+                    // Bước 2: Lấy OUTBOUND transport và ngày khởi hành
                     .map(departure -> {
+                        // Tìm transport OUTBOUND (chiều đi) - lấy transport có departTime sớm nhất nếu có nhiều
+                        Optional<DepartureTransport> outboundTransportOpt = departure.getTransports() != null
+                                ? departure.getTransports().stream()
+                                .filter(t -> t.getType() == TransportType.OUTBOUND)
+                                .min((t1, t2) -> t1.getDepartTime().compareTo(t2.getDepartTime()))
+                                : Optional.empty();
 
-                        // LỌC CHỈ LẤY CHUYẾN "OUTBOUND" (Chiều đi)
-                        Optional<DepartureTransport> outboundTransportOpt = departure.getTransports().stream()
-                                .filter(t -> t.getType() == TransportType.OUTBOUND) // 👈 Chỉ lấy OUTBOUND
-                                .min((t1, t2) -> t1.getDepartTime().compareTo(t2.getDepartTime()));
-
+                        // Lấy ngày từ departTime của OUTBOUND transport
                         LocalDate departDate = outboundTransportOpt
                                 .map(t -> t.getDepartTime().toLocalDate())
                                 .orElse(null);
@@ -65,19 +75,46 @@ public class TourConvert {
                                 .departureDate(departDate)
                                 .build();
                     })
-                    .filter(d -> d.getDepartureDate() != null)
+                    // Bước 3: Lọc chỉ lấy những departure có ngày khởi hành trong tương lai
+                    .filter(d -> d.getDepartureDate() != null && d.getDepartureDate().isAfter(today))
+                    // Bước 4: Sắp xếp theo ngày tăng dần
                     .sorted((d1, d2) -> d1.getDepartureDate().compareTo(d2.getDepartureDate()))
                     .collect(Collectors.toList());
 
             dto.setDepartureDates(departureDates);
 
-// b) Lấy Giá Thấp Nhất (originalPrice của ADULT thấp nhất trong tất cả các DeparturePricing)
+            // b) Lấy Giá Thấp Nhất (originalPrice của ADULT thấp nhất trong các DeparturePricing)
+            // Chỉ tính từ các departure hợp lệ: status = true và ngày trong tương lai
             Long minPrice = tour.getDepartures().stream()
-                    .flatMap(departure -> departure.getPricings().stream())
-                    .filter(p -> p.getPassengerType() == PassengerType.ADULT) // <-- Dùng Enum PassengerType.ADULT
-                    // Map sang originalPrice (BigDecimal)
+                    // Bước 1: Lọc departure có status = true
+                    .filter(departure -> departure.getStatus() != null && departure.getStatus())
+                    // Bước 2: Kiểm tra có OUTBOUND transport và ngày khởi hành trong tương lai
+                    .filter(departure -> {
+                        if (departure.getTransports() == null) {
+                            return false;
+                        }
+
+                        Optional<DepartureTransport> outboundTransportOpt = departure.getTransports().stream()
+                                .filter(t -> t.getType() == TransportType.OUTBOUND)
+                                .min((t1, t2) -> t1.getDepartTime().compareTo(t2.getDepartTime()));
+
+                        if (outboundTransportOpt.isEmpty()) {
+                            return false;
+                        }
+
+                        // Lấy ngày từ departTime của OUTBOUND transport
+                        LocalDate departDate = outboundTransportOpt.get().getDepartTime().toLocalDate();
+                        return departDate.isAfter(today);
+                    })
+                    // Bước 3: Lấy tất cả pricings từ các departure hợp lệ
+                    .flatMap(departure -> departure.getPricings() != null
+                            ? departure.getPricings().stream()
+                            : java.util.stream.Stream.empty())
+                    // Bước 4: Chỉ lấy giá của ADULT
+                    .filter(p -> p.getPassengerType() == PassengerType.ADULT)
+                    // Bước 5: Lấy originalPrice
                     .map(DeparturePricing::getOriginalPrice)
-                    // Tìm giá trị nhỏ nhất (min)
+                    // Bước 6: Tìm giá thấp nhất
                     .min(BigDecimal::compareTo)
                     // Chuyển BigDecimal sang Long (hoặc 0L nếu không tìm thấy)
                     .map(BigDecimal::longValue)

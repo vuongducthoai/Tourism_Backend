@@ -6,17 +6,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserUpdateRequestDTO {
-    private String fullName;
-    private String phone;
-    private LocalDate dateOfBirth;
-    private MultipartFile avatar;
+public class ReviewRequestDTO {
+    private Integer rating;
+    private String comment;
+    List<MultipartFile> images;
+    private Integer tourID;
+    private Integer bookingID;
 }
-
-
