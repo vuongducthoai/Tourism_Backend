@@ -1,7 +1,6 @@
 package com.tourism.backend.repository;
 
 import com.tourism.backend.entity.Tour;
-
 import com.tourism.backend.repository.custom.TourRepositoryCustom;
 
 import org.springframework.data.domain.Pageable;
@@ -19,10 +18,7 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
     Optional<Tour> findByTourCode(String tourCode);
     boolean existsByTourCode(String tourCode);
 
-    /**
-     * Lấy tất cả Tour, JOIN FETCH Location và Main Image.
-     * Cần @Transactional ở Service để truy cập Lazy Collections (departures, pricings) sau này.
-     */
+ 
     @Query("""
         SELECT t 
         FROM Tour t
@@ -33,12 +29,6 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
         """)
     List<Tour> findAllToursForListDisplay();
 
-
-    /**
-     * ✨ PHƯƠNG THỨC MỚI: Lấy tất cả Tour, FETCH tất cả các mối quan hệ cần thiết
-     * (StartLocation, Departures, Pricings, Transports) để Service xử lý.
-     * Cần @Transactional ở Service.
-     */
     @Query("""
         SELECT t 
         FROM Tour t
@@ -48,10 +38,6 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
         """)
     List<Tour> findAllToursWithPricingAndTransport();
 
-
-
-
-
     @Query("SELECT t FROM Tour t " +
             "WHERE t.endLocation.locationID =:locationId " +
             "AND t.tourID <> :excludeTourId"
@@ -60,5 +46,4 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
                                 @Param("excludeTourId") Integer excludeTourId,
                                 Pageable pageable
                                 );
-
 }

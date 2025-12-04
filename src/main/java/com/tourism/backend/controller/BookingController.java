@@ -1,5 +1,7 @@
 package com.tourism.backend.controller;
 
+import com.tourism.backend.dto.request.BookingRequestDTO;
+import com.tourism.backend.dto.response.BookingDetailResponseDTO;
 import com.tourism.backend.dto.requestDTO.BookingCancellationRequestDTO;
 import com.tourism.backend.dto.requestDTO.RefundInformationRequestDTO;
 import com.tourism.backend.dto.response.TourBookingInfoDTO;
@@ -12,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -30,6 +31,18 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/create")
+    public ResponseEntity<BookingDetailResponseDTO> createBooking(@RequestBody BookingRequestDTO request) {
+        BookingDetailResponseDTO response = bookingService.createBooking(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/payment/{bookingCode}")
+    public ResponseEntity<BookingDetailResponseDTO> getBookingDetail(
+            @PathVariable String bookingCode
+    ) {
+        BookingDetailResponseDTO response = bookingService.getBookingDetail(bookingCode);
+        return ResponseEntity.ok(response);
     @GetMapping("/user/{userID}")
     public ResponseEntity<?> getAllBookingsByUser(
             @PathVariable Integer userID,
@@ -49,12 +62,10 @@ public class BookingController {
             }
         }
 
-        // --- BỎ KHỐI TRY-CATCH LỚN ĐỂ LỖI GỐC ĐƯỢC IN RA ---
         List<BookingResponseDTO> bookings = bookingService.getAllBookingsByUser(userID, status);
         return ResponseEntity.ok(bookings);
-        // --------------------------------------------------------
     }
-    // API MỚI: Hủy Booking và Hoàn tiền
+      
     @PostMapping("/cancel")
     public ResponseEntity<?> cancelBooking(
             @Valid @RequestBody BookingCancellationRequestDTO requestDTO
@@ -75,7 +86,6 @@ public class BookingController {
                     "Internal Error",
                     "Lỗi khi hủy booking: " + e.getMessage()
             );
-            // In stack trace ra console để debug
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
@@ -86,7 +96,6 @@ public class BookingController {
             @Valid @RequestBody RefundInformationRequestDTO refundDTO
     ) {
         try {
-            // Sử dụng @Valid để kích hoạt validation trong DTO
             BookingResponseDTO updatedBooking = bookingService.requestRefund(bookingID, refundDTO);
             return ResponseEntity.ok(updatedBooking);
         } catch (RuntimeException e) {

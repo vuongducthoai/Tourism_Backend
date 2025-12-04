@@ -1,6 +1,6 @@
 package com.tourism.backend.repository;
-
 import com.tourism.backend.entity.Booking;
+import java.util.Optional;
 import com.tourism.backend.enums.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,8 +11,6 @@ import java.util.List;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Integer> {
-
-    // Trong BookingRepository.java
     @Query("""
     SELECT DISTINCT b FROM Booking b
     LEFT JOIN FETCH b.tourDeparture td
@@ -26,13 +24,7 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
             @Param("userID") Integer userID,
             @Param("bookingStatus") BookingStatus bookingStatus
     );
+           
+    Optional<Booking> findByBookingCode(String bookingCode);
 }
-
-
-
-
-
-
-
-
 

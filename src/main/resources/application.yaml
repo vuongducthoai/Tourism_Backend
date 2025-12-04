@@ -18,13 +18,11 @@ spring:
     enabled: false
     baseline-on-migrate: false
     baseline-version: 0
-
-
   mail:
     host: smtp.gmail.com
     port: 587
-    username: trananhthu270904@gmail.com
-    password: yfqh vdil pdob euuz
+    username: thoai12309@gmail.com
+    password: ldyb bfmi tsia hvsn
     properties:
       mail:
         smtp:
@@ -35,6 +33,31 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
+  security:
+    user:
+      name: admin
+      password: admin
+  oauth2:
+    client:
+      registration:
+        google:
+          client-id: ${GOOGLE_CLIENT_ID}
+          client-secret: ${GOOGLE_CLIENT_SECRET}
+          scope: profile,email
+          redirect-uri: {baseUrl}/api/auth/google/callback
+      provider:
+        google:
+          authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+          token-uri: https://oauth2.googleapis.com/token
+          user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+          user-name-attribute: sub
+
+  secret: 59379ea8-777d-49e1-ac8e-03420874f6a3
+  # 15'
+  access-token-expiration: 900000
+  # 7 day
+  refresh-token-expiration: 604800000
+
 
 cloudinary:
   cloud-name: dnt8vx1at
@@ -44,3 +67,19 @@ cloudinary:
 app:
   cors:
     allowed-origins: http://localhost:3000, http://mydomain.com
+  frontend:
+    url: http://localhost:3000
+  .oauth2:
+    success-redirect: http://localhost:3000/oauth2/redirect
+    failure-redirect: http://localhost:3000/login?error=oauth2_failed
+vnpay:
+  tmn-code: 2Z2285VA
+  hash-secret: UUN1JEF3JCWQIRCMN76Q34RUQLRI4Q1J
+  api-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  return-url: http://localhost:8080/api/payment/vnpay-callback
+  version: 2.1.0
+  command: pay
+  order-type: other
+
+
+
