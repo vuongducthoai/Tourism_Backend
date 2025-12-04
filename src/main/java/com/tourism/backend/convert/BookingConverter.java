@@ -20,7 +20,7 @@ public class BookingConverter {
 
     public BookingResponseDTO convertToBookingResponseDTO(Booking booking) {
         // Map các trường từ Booking entity (sử dụng ModelMapper)
-        BookingResponseDTO dto = modelMapper.map(booking, BookingResponseDTO.class);
+        BookingResponseDTO dto = new BookingResponseDTO();
 
         // Map thủ công các trường từ Booking entity (dòng 18-32 trong BookingResponseDTO)
         dto.setBookingID(booking.getBookingID());

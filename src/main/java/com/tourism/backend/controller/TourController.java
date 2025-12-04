@@ -88,12 +88,12 @@ public class TourController {
 
     @GetMapping("/search")
     public ResponseEntity<?> searchTours(
-            // Nhận DTO duy nhất (tự động ánh xạ từ URL parameters)
-            @ModelAttribute SearchToursRequestDTO dto
+            @ModelAttribute SearchToursRequestDTO dto,
+            @RequestParam(value = "userId", required = false) Integer userId
     ) {
         try {
             // DTO chứa tất cả thông tin tìm kiếm
-            List<TourResponseDTO> tours = tourService.searchTours(dto);
+            List<TourResponseDTO> tours = tourService.searchTours(dto,userId);
 
             if (tours.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.OK).body("Không tìm thấy tour nào phù hợp với điều kiện lọc.");

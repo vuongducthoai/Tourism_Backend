@@ -50,14 +50,17 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/oauth2/**",
                                 "/login/oauth2/**",
-                                "/error"
+                                "/error",
+                                "/api/users/**",
+                                "/api/favorite-tours/**",
+                                "/api/bookings/**",
+                                "/api/reviews/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(
-                                "/api/users/**",
-                                "/api/bookings/**",
-                                "/api/payment/**",
-                                "/api/reviews/**"
+
+                                "/api/payment/**"
+
                         ).authenticated()
                         // Tất cả request khác cần authenticated
                         .anyRequest().authenticated()
