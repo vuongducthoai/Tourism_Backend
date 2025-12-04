@@ -17,4 +17,5 @@ public class SearchToursRequestDTO {
     private Integer startLocationID;
     private Integer endLocationID;
     private String  transportation;
+    private Integer rating;
 }

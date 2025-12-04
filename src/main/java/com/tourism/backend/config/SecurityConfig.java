@@ -53,11 +53,11 @@ public class SecurityConfig {
                                 "/error"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
                         .requestMatchers(
                                 "/api/users/**",
                                 "/api/bookings/**",
-                                "/api/payment/**"
+                                "/api/payment/**",
+                                "/api/reviews/**"
                         ).authenticated()
                         // Tất cả request khác cần authenticated
                         .anyRequest().authenticated()
