@@ -43,6 +43,8 @@ public class BookingController {
     ) {
         BookingDetailResponseDTO response = bookingService.getBookingDetail(bookingCode);
         return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/user/{userID}")
     public ResponseEntity<?> getAllBookingsByUser(
             @PathVariable Integer userID,
