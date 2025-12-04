@@ -1,5 +1,6 @@
 package com.tourism.backend.service.impl;
 
+import com.tourism.backend.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,7 @@ import org.thymeleaf.context.Context;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class EmailServiceImpl {
+public class EmailServiceImpl implements EmailService {
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
@@ -55,7 +56,7 @@ public class EmailServiceImpl {
         }
     }
 
-    private String createEmailTemplate(String fullName, String verificationLink) {
+    public String createEmailTemplate(String fullName, String verificationLink) {
         return "<!DOCTYPE html>" +
                 "<html>" +
                 "<head>" +

@@ -106,10 +106,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public String verifyEmail(String token) throws BadRequestException, ChangeSetPersister.NotFoundException {
+    public String verifyEmail(String token) throws BadRequestException {
         // 1. Tìm user theo token
         User user = userRepository.findByVerificationToken(token)
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
+                .orElseThrow(() -> new NotFoundException("Token không hợp lệ"));
 
         // 2. Kiểm tra token đã hết hạn chưa
         if (user.getVerificationTokenExpiry().isBefore(LocalDateTime.now())) {
@@ -133,9 +133,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public void resendVerificationEmail(String email) throws BadRequestException, ChangeSetPersister.NotFoundException {
+    public void resendVerificationEmail(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
+                .orElseThrow(() -> new NotFoundException("Email không tồn tại"));
 
         if (user.getIsEmailVerified()) {
             throw new BadRequestException("Email đã được xác thực");
