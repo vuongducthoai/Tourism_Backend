@@ -37,21 +37,22 @@ spring:
     user:
       name: admin
       password: admin
-  oauth2:
-    client:
-      registration:
-        google:
-          client-id: ${GOOGLE_CLIENT_ID}
-          client-secret: ${GOOGLE_CLIENT_SECRET}
-          scope: profile,email
-          redirect-uri: {baseUrl}/api/auth/google/callback
-      provider:
-        google:
-          authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
-          token-uri: https://oauth2.googleapis.com/token
-          user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
-          user-name-attribute: sub
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 365652132286-l3248dr6g4ekvur1mn1ua4fvduusavqc.apps.googleusercontent.com
+            client-secret: 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
+            scope: profile,email
+            redirect-uri: "{baseUrl}/api/auth/google/callback"
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
 
+jwt:
   secret: 59379ea8-777d-49e1-ac8e-03420874f6a3
   # 15'
   access-token-expiration: 900000
