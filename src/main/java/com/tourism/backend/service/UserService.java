@@ -10,7 +10,6 @@ import java.io.IOException;
 
 public interface UserService {
     UserReaponseDTO getUserById(Integer userID);
-    UserReaponseDTO updateUser(Integer userID, UserUpdateRequestDTO updateDTO);
     RegisterResponseDTO register(RegisterRequestDTO requestDTO) throws BadRequestException;
     String verifyEmail(String token) throws com.tourism.backend.exception.BadRequestException;
     void resendVerificationEmail(String email);

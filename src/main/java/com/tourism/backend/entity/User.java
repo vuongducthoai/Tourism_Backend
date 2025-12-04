@@ -43,7 +43,7 @@ public class User extends BaseEntity{
     @NotBlank(message = "Password is required")
     private String password;
 
-    @NotBlank(message = "Avatar is required")
+    @Column(name = "avatar", nullable = false)
     private String avatar;
 
     private Boolean status = true;
