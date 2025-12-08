@@ -54,7 +54,8 @@ public class SecurityConfig {
                                 "/api/users/**",
                                 "/api/favorite-tours/**",
                                 "/api/bookings/**",
-                                "/api/reviews/**"
+                                "/api/reviews/**",
+                                "/ws/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(

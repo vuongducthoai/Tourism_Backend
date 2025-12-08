@@ -1,6 +1,8 @@
 package com.tourism.backend.service.impl;
 
 import com.tourism.backend.dto.request.BookingRequestDTO;
+import com.tourism.backend.dto.requestDTO.BookingSearchRequestDTO;
+import com.tourism.backend.dto.requestDTO.BookingUpdateStatusRequestDTO;
 import com.tourism.backend.dto.response.BookingDetailResponseDTO;
 import com.tourism.backend.convert.BookingConverter;
 import com.tourism.backend.dto.requestDTO.BookingCancellationRequestDTO;
@@ -16,6 +18,8 @@ import com.tourism.backend.repository.*;
 import com.tourism.backend.service.BookingService;
 import com.tourism.backend.service.MailService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +44,7 @@ public class BookingServiceImpl implements BookingService {
     private final RefundInformationRepository refundInformationRepository;
     private final MailService mailService;
     private static final BigDecimal COIN_RATE = new BigDecimal("1000");
+    private final WebSocketService webSocketService;
     @Override
     public TourBookingInfoDTO getTourBookingInfo(String tourCode, Integer departureId) {
         Tour tour = tourRepository.findByTourCode(tourCode)
@@ -392,9 +397,12 @@ public class BookingServiceImpl implements BookingService {
         // 5. Cập nhật Booking
         booking.setBookingStatus(BookingStatus.CANCELLED);
         Booking updatedBooking = bookingRepository.save(booking);
-
-        // 6. Trả về Response
-        return bookingConverter.convertToBookingResponseDTO(updatedBooking);
+        BookingResponseDTO responseDTO = bookingConverter.convertToBookingResponseDTO(updatedBooking);
+        webSocketService.notifyAdminBookingUpdate(responseDTO);
+//        if (booking.getUser() != null) {
+//            webSocketService.notifyUserBookingUpdate(booking.getUser().getUserID(), responseDTO);
+//        }
+        return responseDTO;
     }
 
     @Override
@@ -445,8 +453,92 @@ public class BookingServiceImpl implements BookingService {
             mailService.sendRefundRequestNotification(updatedBooking, savedRefundInfo, totalRefundAmount);
         }
 
-
         // 7. Trả về Response
-        return bookingConverter.convertToBookingResponseDTO(updatedBooking);
+        BookingResponseDTO responseDTO = bookingConverter.convertToBookingResponseDTO(updatedBooking);
+        webSocketService.notifyAdminBookingUpdate(responseDTO);
+//        if (booking.getUser() != null) {
+//            webSocketService.notifyUserBookingUpdate(booking.getUser().getUserID(), responseDTO);
+//        }
+        return responseDTO;
+
+    }
+
+    @Override
+    public Page<BookingResponseDTO> searchBookings(BookingSearchRequestDTO searchDTO, Pageable pageable) {
+        Page<Booking> bookingPage = bookingRepository.searchBookings(searchDTO, pageable);
+        return bookingPage.map(bookingConverter::convertToBookingResponseDTO);
+    }
+
+    @Override
+    @Transactional
+    public BookingResponseDTO updateBookingStatus(BookingUpdateStatusRequestDTO requestDTO) {
+        // 1. Tìm Booking
+        Booking booking = bookingRepository.findById(requestDTO.getBookingID())
+                .orElseThrow(() -> new RuntimeException("Booking not found with ID: " + requestDTO.getBookingID()));
+
+        String newStatus = requestDTO.getBookingStatus();
+        String currentStatus = booking.getBookingStatus().name();
+
+        // 2. Xử lý logic theo từng trạng thái
+        switch (newStatus) {
+            case "PAID":
+                // Chỉ cho phép chuyển từ PENDING_CONFIRMATION sang PAID
+                if (!currentStatus.equals("PENDING_CONFIRMATION")) {
+                    throw new RuntimeException("Chỉ có thể xác nhận booking ở trạng thái 'Chờ xác nhận'");
+                }
+                booking.setBookingStatus(BookingStatus.PAID);
+
+                // Gửi email xác nhận thanh toán
+                mailService.sendPaymentConfirmationEmail(booking);
+                break;
+
+            case "CANCELLED":
+                // Cho phép hủy từ nhiều trạng thái
+                if (!List.of("PENDING_PAYMENT", "PENDING_CONFIRMATION", "PAID", "PENDING_REFUND")
+                        .contains(currentStatus)) {
+                    throw new RuntimeException("Không thể hủy booking ở trạng thái hiện tại");
+                }
+
+                booking.setBookingStatus(BookingStatus.CANCELLED);
+                booking.setCancelReason(requestDTO.getCancelReason());
+
+                // Xử lý hoàn tiền theo trạng thái cũ
+                if (currentStatus.equals("PENDING_CONFIRMATION") ||
+                        currentStatus.equals("PAID") ||
+                        currentStatus.equals("PENDING_REFUND")) {
+
+                    BigDecimal refundAmount = booking.getTotalPrice().add(
+                            booking.getPaidByCoin() != null ? booking.getPaidByCoin() : BigDecimal.ZERO
+                    );
+                    booking.setRefundAmount(refundAmount);
+
+                    // Gửi email thông báo hủy và hoàn tiền
+                    mailService.sendCancellationWithRefundEmail(booking, refundAmount);
+                } else {
+                    // PENDING_PAYMENT - chỉ gửi email hủy
+                    mailService.sendCancellationEmail(booking);
+                }
+                break;
+
+            default:
+                throw new RuntimeException("Trạng thái không hợp lệ: " + newStatus);
+        }
+
+        // 3. Lưu booking
+        Booking updatedBooking = bookingRepository.save(booking);
+
+        // 4. Convert sang DTO
+        BookingResponseDTO responseDTO = bookingConverter.convertToBookingResponseDTO(updatedBooking);
+
+        // 5. GỬI WEBSOCKET NOTIFICATION
+        // Gửi cho admin
+        webSocketService.notifyAdminBookingUpdate(responseDTO);
+
+        // Gửi cho user (nếu có)
+        if (booking.getUser() != null) {
+            webSocketService.notifyUserBookingUpdate(booking.getUser().getUserID(), responseDTO);
+        }
+
+        return responseDTO;
     }
 }
