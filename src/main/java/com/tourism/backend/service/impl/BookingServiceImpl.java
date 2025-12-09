@@ -11,13 +11,16 @@ import com.tourism.backend.dto.response.BookingFlightDTO;
 import com.tourism.backend.dto.response.CouponDTO;
 import com.tourism.backend.dto.response.TourBookingInfoDTO;
 import com.tourism.backend.dto.responseDTO.BookingResponseDTO;
+import com.tourism.backend.dto.responseDTO.TransactionVerificationDTO;
 import com.tourism.backend.entity.*;
 import com.tourism.backend.enums.BookingStatus;
 import com.tourism.backend.enums.PassengerType;
 import com.tourism.backend.repository.*;
 import com.tourism.backend.service.BookingService;
 import com.tourism.backend.service.MailService;
+import com.tourism.backend.service.SepayService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,6 +36,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BookingServiceImpl implements BookingService {
     private final TourRepository tourRepository;
     private final TourDepartureRepository departureRepository;
@@ -45,6 +49,7 @@ public class BookingServiceImpl implements BookingService {
     private final MailService mailService;
     private static final BigDecimal COIN_RATE = new BigDecimal("1000");
     private final WebSocketService webSocketService;
+    private final SepayService sepayService;
     @Override
     public TourBookingInfoDTO getTourBookingInfo(String tourCode, Integer departureId) {
         Tour tour = tourRepository.findByTourCode(tourCode)
@@ -469,76 +474,204 @@ public class BookingServiceImpl implements BookingService {
         return bookingPage.map(bookingConverter::convertToBookingResponseDTO);
     }
 
-    @Override
-    @Transactional
-    public BookingResponseDTO updateBookingStatus(BookingUpdateStatusRequestDTO requestDTO) {
-        // 1. Tìm Booking
-        Booking booking = bookingRepository.findById(requestDTO.getBookingID())
-                .orElseThrow(() -> new RuntimeException("Booking not found with ID: " + requestDTO.getBookingID()));
+//    @Override
+//    @Transactional
+//    public BookingResponseDTO updateBookingStatus(BookingUpdateStatusRequestDTO requestDTO) {
+//        Booking booking = bookingRepository.findById(requestDTO.getBookingID())
+//                .orElseThrow(() -> new RuntimeException("Booking not found with ID: " + requestDTO.getBookingID()));
+//
+//        String newStatus = requestDTO.getBookingStatus();
+//        String currentStatus = booking.getBookingStatus().name();
+//
+//        switch (newStatus) {
+//            case "PAID":
+//                if (!currentStatus.equals("PENDING_CONFIRMATION")) {
+//                    throw new RuntimeException("Chỉ có thể xác nhận booking ở trạng thái 'Chờ xác nhận'");
+//                }
+//                booking.setBookingStatus(BookingStatus.PAID);
+//                mailService.sendPaymentConfirmationEmail(booking);
+//                break;
+//
+//            case "CANCELLED":
+//                if (!List.of("PENDING_PAYMENT", "PENDING_CONFIRMATION", "PAID", "PENDING_REFUND")
+//                        .contains(currentStatus)) {
+//                    throw new RuntimeException("Không thể hủy booking ở trạng thái hiện tại");
+//                }
+//
+//                booking.setBookingStatus(BookingStatus.CANCELLED);
+//                booking.setCancelReason(requestDTO.getCancelReason());
+//
+//                // XỬ LÝ HOÀN TIỀN QUA SEPAY
+//                if (currentStatus.equals("PENDING_CONFIRMATION") ||
+//                        currentStatus.equals("PAID") ||
+//                        currentStatus.equals("PENDING_REFUND")) {
+//
+//                    BigDecimal refundAmount = booking.getTotalPrice().add(
+//                            booking.getPaidByCoin() != null ? booking.getPaidByCoin() : BigDecimal.ZERO
+//                    );
+//                    booking.setRefundAmount(refundAmount);
+//
+//                    // Xác định thông tin tài khoản hoàn tiền
+//                    String accountNumber = null;
+//                    String accountName = null;
+//                    String bankCode = null;
+//
+//                    // Ưu tiên RefundInformation, nếu không có thì dùng Payment
+//                    if (booking.getRefundInformation() != null) {
+//                        RefundInformation refundInfo = booking.getRefundInformation();
+//                        accountNumber = refundInfo.getAccountNumber();
+//                        accountName = refundInfo.getAccountName();
+//                        bankCode = refundInfo.getBank();
+//                        log.info("Using RefundInformation for refund: {}", accountNumber);
+//                    } else if (booking.getPayment() != null) {
+//                        Payment payment = booking.getPayment();
+//                        accountNumber = payment.getAccountNumber();
+//                        accountName = payment.getAccountName();
+//                        bankCode = payment.getBank();
+//                        log.info("Using Payment information for refund: {}", accountNumber);
+//                    }
+//
+//                    // Thực hiện hoàn tiền qua SePay
+//                    if (accountNumber != null && accountName != null && bankCode != null) {
+//                        String description = String.format(
+//                                "Hoan tien booking %s - Tour %s",
+//                                booking.getBookingCode(),
+//                                booking.getTourDeparture().getTour().getTourCode()
+//                        );
+//
+//                        boolean transferSuccess = sepayService.transferRefund(
+//                                accountNumber,
+//                                accountName,
+//                                bankCode,
+//                                refundAmount,
+//                                description
+//                        );
+//
+//                        if (transferSuccess) {
+//                            log.info("SePay refund successful for booking: {}", booking.getBookingCode());
+//                            mailService.sendCancellationWithRefundEmail(booking, refundAmount);
+//                        } else {
+//                            log.error("SePay refund failed for booking: {}", booking.getBookingCode());
+//                            mailService.sendCancellationWithRefundEmail(booking, refundAmount);
+//                        }
+//                    } else {
+//                        log.warn("No account information for refund. Booking: {}", booking.getBookingCode());
+//                        mailService.sendCancellationWithRefundEmail(booking, refundAmount);
+//                    }
+//                } else {
+//                    mailService.sendCancellationEmail(booking);
+//                }
+//                break;
+//
+//            default:
+//                throw new RuntimeException("Trạng thái không hợp lệ: " + newStatus);
+//        }
+//
+//        Booking updatedBooking = bookingRepository.save(booking);
+//        BookingResponseDTO responseDTO = bookingConverter.convertToBookingResponseDTO(updatedBooking);
+//
+//        webSocketService.notifyAdminBookingUpdate(responseDTO);
+//
+//        if (booking.getUser() != null) {
+//            webSocketService.notifyUserBookingUpdate(booking.getUser().getUserID(), responseDTO);
+//        }
+//
+//        return responseDTO;
+//    }
+@Override
+@Transactional
+public BookingResponseDTO updateBookingStatus(BookingUpdateStatusRequestDTO requestDTO) {
+    Booking booking = bookingRepository.findById(requestDTO.getBookingID())
+            .orElseThrow(() -> new RuntimeException("Booking not found with ID: " + requestDTO.getBookingID()));
 
-        String newStatus = requestDTO.getBookingStatus();
-        String currentStatus = booking.getBookingStatus().name();
+    String newStatus = requestDTO.getBookingStatus();
+    String currentStatus = booking.getBookingStatus().name();
 
-        // 2. Xử lý logic theo từng trạng thái
-        switch (newStatus) {
-            case "PAID":
-                // Chỉ cho phép chuyển từ PENDING_CONFIRMATION sang PAID
-                if (!currentStatus.equals("PENDING_CONFIRMATION")) {
-                    throw new RuntimeException("Chỉ có thể xác nhận booking ở trạng thái 'Chờ xác nhận'");
+    switch (newStatus) {
+        case "PAID":
+            if (!currentStatus.equals("PENDING_CONFIRMATION")) {
+                throw new RuntimeException("Chỉ có thể xác nhận booking ở trạng thái 'Chờ xác nhận'");
+            }
+            booking.setBookingStatus(BookingStatus.PAID);
+            mailService.sendPaymentConfirmationEmail(booking);
+            break;
+
+        case "CANCELLED":
+            if (!List.of("PENDING_PAYMENT", "PENDING_CONFIRMATION", "PAID", "PENDING_REFUND")
+                    .contains(currentStatus)) {
+                throw new RuntimeException("Không thể hủy booking ở trạng thái hiện tại");
+            }
+
+            // ✅ KIỂM TRA GIAO DỊCH HOÀN TIỀN QUA SEPAY
+            if (currentStatus.equals("PENDING_CONFIRMATION") ||
+                    currentStatus.equals("PAID") ||
+                    currentStatus.equals("PENDING_REFUND")) {
+
+                BigDecimal refundAmount = booking.getTotalPrice().add(
+                        booking.getPaidByCoin() != null ? booking.getPaidByCoin() : BigDecimal.ZERO
+                );
+
+                // Lấy thông tin tài khoản hoàn tiền
+                String accountNumber = null;
+                String accountName = null;
+                String bank = null;
+
+                if (booking.getRefundInformation() != null) {
+                    accountNumber = booking.getRefundInformation().getAccountNumber();
+                    accountName = booking.getRefundInformation().getAccountName();
+                    bank = booking.getRefundInformation().getBank();
+                } else if (booking.getPayment() != null) {
+                    accountNumber = booking.getPayment().getAccountNumber();
+                    accountName = booking.getPayment().getAccountName();
+                    bank = booking.getPayment().getBank();
                 }
-                booking.setBookingStatus(BookingStatus.PAID);
 
-                // Gửi email xác nhận thanh toán
-                mailService.sendPaymentConfirmationEmail(booking);
-                break;
+                // ✅ VERIFY GIAO DỊCH QUA SEPAY
+                if (accountNumber != null) {
+                    log.info("🔍 Checking SePay transactions for booking: {}", booking.getBookingCode());
 
-            case "CANCELLED":
-                // Cho phép hủy từ nhiều trạng thái
-                if (!List.of("PENDING_PAYMENT", "PENDING_CONFIRMATION", "PAID", "PENDING_REFUND")
-                        .contains(currentStatus)) {
-                    throw new RuntimeException("Không thể hủy booking ở trạng thái hiện tại");
-                }
-
-                booking.setBookingStatus(BookingStatus.CANCELLED);
-                booking.setCancelReason(requestDTO.getCancelReason());
-
-                // Xử lý hoàn tiền theo trạng thái cũ
-                if (currentStatus.equals("PENDING_CONFIRMATION") ||
-                        currentStatus.equals("PAID") ||
-                        currentStatus.equals("PENDING_REFUND")) {
-
-                    BigDecimal refundAmount = booking.getTotalPrice().add(
-                            booking.getPaidByCoin() != null ? booking.getPaidByCoin() : BigDecimal.ZERO
+                    TransactionVerificationDTO verification = sepayService.verifyRefundTransaction(
+                            booking.getBookingCode(),
+                            refundAmount,
+                            accountNumber,
+                            accountName,
+                            bank
                     );
-                    booking.setRefundAmount(refundAmount);
 
-                    // Gửi email thông báo hủy và hoàn tiền
-                    mailService.sendCancellationWithRefundEmail(booking, refundAmount);
-                } else {
-                    // PENDING_PAYMENT - chỉ gửi email hủy
-                    mailService.sendCancellationEmail(booking);
+                    if (!verification.isVerified()) {
+                        throw new RuntimeException(
+                                "⚠️ Không tìm thấy giao dịch hoàn tiền khớp trong lịch sử 24h gần đây. " +
+                                        "Vui lòng kiểm tra lại hoặc chuyển khoản theo đúng thông tin."
+                        );
+                    }
+
+                    log.info("✅ Transaction verified: {}", verification.getTransactionReference());
                 }
-                break;
 
-            default:
-                throw new RuntimeException("Trạng thái không hợp lệ: " + newStatus);
-        }
+                booking.setRefundAmount(refundAmount);
+                mailService.sendCancellationWithRefundEmail(booking, refundAmount);
 
-        // 3. Lưu booking
-        Booking updatedBooking = bookingRepository.save(booking);
+            } else {
+                mailService.sendCancellationEmail(booking);
+            }
 
-        // 4. Convert sang DTO
-        BookingResponseDTO responseDTO = bookingConverter.convertToBookingResponseDTO(updatedBooking);
+            booking.setBookingStatus(BookingStatus.CANCELLED);
+            booking.setCancelReason(requestDTO.getCancelReason());
+            break;
 
-        // 5. GỬI WEBSOCKET NOTIFICATION
-        // Gửi cho admin
-        webSocketService.notifyAdminBookingUpdate(responseDTO);
-
-        // Gửi cho user (nếu có)
-        if (booking.getUser() != null) {
-            webSocketService.notifyUserBookingUpdate(booking.getUser().getUserID(), responseDTO);
-        }
-
-        return responseDTO;
+        default:
+            throw new RuntimeException("Trạng thái không hợp lệ: " + newStatus);
     }
+
+    Booking updatedBooking = bookingRepository.save(booking);
+    BookingResponseDTO responseDTO = bookingConverter.convertToBookingResponseDTO(updatedBooking);
+
+    // WebSocket notification
+    webSocketService.notifyAdminBookingUpdate(responseDTO);
+    if (booking.getUser() != null) {
+        webSocketService.notifyUserBookingUpdate(booking.getUser().getUserID(), responseDTO);
+    }
+
+    return responseDTO;
+}
 }
