@@ -1,6 +1,7 @@
 package com.tourism.backend.service.impl;
 
 import com.tourism.backend.dto.responseDTO.BookingResponseDTO;
+import com.tourism.backend.dto.responseDTO.UserReaponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -23,5 +24,9 @@ public class WebSocketService {
      */
     public void notifyUserBookingUpdate(Integer userId, BookingResponseDTO booking) {
         messagingTemplate.convertAndSend("/topic/user/" + userId + "/bookings", booking);
+    }
+
+    public void notifyUserUpdate(UserReaponseDTO user) {
+        messagingTemplate.convertAndSend("/topic/admin/users", user);
     }
 }

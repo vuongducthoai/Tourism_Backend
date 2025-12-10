@@ -2,6 +2,7 @@ package com.tourism.backend.service.impl;
 
 import com.tourism.backend.entity.Booking;
 import com.tourism.backend.entity.RefundInformation;
+import com.tourism.backend.entity.User;
 import com.tourism.backend.service.MailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.SimpleMailMessage;
@@ -81,7 +82,7 @@ public class MailServiceImpl implements MailService {
                         "Tour của Quý khách đã được xác nhận thành công. " +
                         "Chúng tôi sẽ liên hệ với Quý khách trước ngày khởi hành.\n\n" +
                         "Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ:\n" +
-                        "Email: thoai12309@gmail.com\n" +
+                        "Email: trananhthu270904@gmail.com\n" +
                         "Điện thoại: 0339263066\n\n" +
                         "Trân trọng,\nFuture Travel Team",
                 booking.getContactFullName(), booking.getBookingCode(), tourName, tourCode, formattedAmount
@@ -112,7 +113,7 @@ public class MailServiceImpl implements MailService {
                         "%s\n\n" +
                         "Chúng tôi xin lỗi vì sự bất tiện này. " +
                         "Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ:\n" +
-                        "Email: thoai12309@gmail.com\n" +
+                        "Email: trananhthu270904@gmail.com\n" +
                         "Điện thoại: 0339263066\n\n" +
                         "Trân trọng,\nFuture Travel Team",
                 booking.getContactFullName(), booking.getBookingCode(), tourName, tourCode,
@@ -169,7 +170,7 @@ public class MailServiceImpl implements MailService {
                         "(bao gồm cả điểm tích lũy cá nhân nếu có sử dụng).\n\n" +
                         "Chúng tôi xin lỗi vì sự bất tiện này. " +
                         "Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ:\n" +
-                        "Email: thoai12309@gmail.com\n" +
+                        "Email: trananhthu270904@gmail.com\n" +
                         "Điện thoại: 0339263066\n\n" +
                         "Trân trọng,\nFuture Travel Team",
                 booking.getContactFullName(), booking.getBookingCode(), tourName, tourCode,
@@ -178,6 +179,37 @@ public class MailServiceImpl implements MailService {
         );
 
         message.setText(emailContent);
+        mailSender.send(message);
+    }
+
+    @Override
+    public void sendAccountStatusEmail(User user, Boolean status, String reason) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(user.getEmail());
+
+        String action = status ? "MỞ KHÓA" : "KHÓA";
+        message.setSubject("THÔNG BÁO " + action + " TÀI KHOẢN - FUTURE TRAVEL");
+
+        String content = String.format(
+                "Xin chào %s,\n\n" +
+                        "Tài khoản của bạn đã được %s.\n\n" +
+                        "--- THÔNG TIN TÀI KHOẢN ---\n" +
+                        "Họ tên: %s\n" +
+                        "Email: %s\n" +
+                        "Số điện thoại: %s\n" +
+                        "Ngày sinh: %s\n\n" +
+                        "--- LÝ DO ---\n%s\n\n" +
+                        "Nếu có bất kỳ thắc mắc nào, vui lòng liên hệ:\n" +
+                        "Email: trananhthu270904@gmail.com\n" +
+                        "Điện thoại: 0339263066\n\n" +
+                        "Trân trọng,\nFuture Travel Team",
+                user.getFullName(),
+                (status ? "mở khóa hoạt động trở lại" : "tạm khóa"),
+                user.getFullName(), user.getEmail(), user.getPhone(), user.getDateOfBirth(),
+                reason
+        );
+
+        message.setText(content);
         mailSender.send(message);
     }
 }
