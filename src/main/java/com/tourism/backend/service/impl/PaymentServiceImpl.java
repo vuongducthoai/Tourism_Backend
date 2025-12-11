@@ -382,7 +382,7 @@ public class PaymentServiceImpl implements PaymentService {
 
                 // Tên ngân hàng đầy đủ
                 if (data.getCounterAccountBankName() != null && !data.getCounterAccountBankName().isEmpty()) {
-                    payment.setBankName(data.getCounterAccountBankName());
+                    payment.setBank(data.getCounterAccountBankName());
                     log.info("Bank Name: {}", data.getCounterAccountBankName());
                 }
 
@@ -554,11 +554,11 @@ public class PaymentServiceImpl implements PaymentService {
                     // Tên ngân hàng - kiểm tra null
                     String bankName = transaction.getCounterAccountBankName();
                     if (bankName != null && !bankName.isEmpty()) {
-                        payment.setBankName(bankName);
+                        payment.setBank(bankName);
                         log.info("Bank Name: {}", transaction.getCounterAccountBankName());
                     } else if(bankCode != null){
-                        payment.setBankName(BankUntil.getBankNameFromCode(bankCode));
-                        log.info("Bank Name was null, mapped from code: {}", payment.getBankName());
+                        payment.setBank(BankUntil.getBankNameFromCode(bankCode));
+                        log.info("Bank Name was null, mapped from code: {}", payment.getBank());
                     }
 
                     // Mã giao dịch ngân hàng - kiểm tra null
