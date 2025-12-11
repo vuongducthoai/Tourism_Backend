@@ -21,6 +21,6 @@ public interface TourService {
     List<TourResponseDTO> getAllToursForListDisplay();
     TourDetailResponseDTO getTourDetail(String tourCode);
     List<TourSpecialResponseDTO> getTop10DeepestDiscountTours();
-    List<TourResponseDTO> searchTours(SearchToursRequestDTO dto);
+    List<TourResponseDTO> searchTours(SearchToursRequestDTO dto,Integer userId);
     public List<TourCardResponseDTO> getRelatedTours(String currentTourCode);
 }

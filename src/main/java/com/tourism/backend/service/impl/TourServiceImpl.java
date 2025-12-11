@@ -25,6 +25,7 @@ import com.tourism.backend.enums.Region;
 import com.tourism.backend.repository.LocationRepository;
 import com.tourism.backend.repository.TourRepository;
 import com.tourism.backend.service.CloudinaryService;
+import com.tourism.backend.service.FavoriteTourService;
 import com.tourism.backend.service.LocationService;
 import com.tourism.backend.service.TourService;
 import lombok.RequiredArgsConstructor;
@@ -39,10 +40,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,6 +54,7 @@ public class TourServiceImpl implements TourService {
     private final LocationService locationService;
     private final LocationConverter locationConverter;
     private final TourSpecialConvert tourSpecialConvert;
+    private final FavoriteTourService favoriteTourService;
     @Override // Ghi đè phương thức từ Interface
     @Transactional
     public Tour createTourWithImages(TourCreateDTO dto) throws IOException {
@@ -600,11 +599,17 @@ public class TourServiceImpl implements TourService {
     }
 
     @Override
-    public List<TourResponseDTO> searchTours(SearchToursRequestDTO dto) {
+    public List<TourResponseDTO> searchTours(SearchToursRequestDTO dto,Integer userId) {
         List<Tour> tours = tourRepository.searchToursDynamically(dto);
 
+        // 1. Lấy danh sách Tour ID yêu thích của User (nếu có userId)
+        Set<Integer> favoriteTourIds = (userId != null)
+                ? favoriteTourService.getFavoriteTourIdsByUserId(userId)
+                : Collections.emptySet(); // Nếu không có userId, trả về Set rỗng
+
+        // 2. Map và kiểm tra trạng thái yêu thích
         return tours.stream()
-                .map(tourConvert::convertToTourReponsetoryDTO)
+                .map(tour -> tourConvert.convertToTourFavoriteReponsetoryDTO(tour, favoriteTourIds))
                 .collect(Collectors.toList());
     }
 

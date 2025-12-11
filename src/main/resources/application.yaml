@@ -83,4 +83,9 @@ vnpay:
   order-type: other
 
 
-
+sepay:
+  api-url: https://my.sepay.vn/userapi
+  token: 5DIRHLIEPC9Y0GFKSNXACCQPEREHL3A1BVNTKS8X8DRFNHWDRXFWK4PWMUZKQG0J
+  account-number: 10002897094
+  account-name: TRAN ANH THU
+  bank-code: BIDV

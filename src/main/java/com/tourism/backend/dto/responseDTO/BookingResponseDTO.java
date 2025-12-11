@@ -41,5 +41,10 @@ public class BookingResponseDTO {
     private BigDecimal amount;
     private LocalDateTime timeLimit;
     private List<BookingPassengerResponseDTO> passengers;
-
+    private String bank;
+    private String accountNumber;
+    private String accountName;
+    private String refundBank;
+    private String refundAccountNumber;
+    private String refundAccountName;
 }

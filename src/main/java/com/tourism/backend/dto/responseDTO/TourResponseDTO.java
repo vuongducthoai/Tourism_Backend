@@ -19,4 +19,5 @@ public class TourResponseDTO {
     private List<TourDepartureDateResponseDTO> departureDates;
     private Long money;
     private String image;
+    private Boolean isFavorite;
 }

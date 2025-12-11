@@ -1,6 +1,8 @@
 package com.tourism.backend.controller;
 
 import com.tourism.backend.dto.request.BookingRequestDTO;
+import com.tourism.backend.dto.requestDTO.BookingSearchRequestDTO;
+import com.tourism.backend.dto.requestDTO.BookingUpdateStatusRequestDTO;
 import com.tourism.backend.dto.response.BookingDetailResponseDTO;
 import com.tourism.backend.dto.requestDTO.BookingCancellationRequestDTO;
 import com.tourism.backend.dto.requestDTO.RefundInformationRequestDTO;
@@ -15,7 +17,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-
+import org.springframework.data.domain.Page; // Import Page
+import org.springframework.data.domain.PageRequest; // Import PageRequest
+import org.springframework.data.domain.Pageable; // Import Pageable
+import org.springframework.data.domain.Sort;
 @RestController
 @RequestMapping("/api/bookings")
 @RequiredArgsConstructor
@@ -112,6 +117,46 @@ public class BookingController {
                     HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     "Internal Error",
                     "Lỗi khi yêu cầu hoàn tiền: " + e.getMessage()
+            );
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+    @PostMapping("/admin/search")
+    public ResponseEntity<Page<BookingResponseDTO>> searchBookings(
+            @RequestBody BookingSearchRequestDTO searchDTO,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "bookingDate") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("DESC") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+
+        Page<BookingResponseDTO> responsePage = bookingService.searchBookings(searchDTO, pageable);
+
+        return ResponseEntity.ok(responsePage);
+    }
+    @PostMapping("/admin/update-status")
+    public ResponseEntity<?> updateBookingStatus(
+            @Valid @RequestBody BookingUpdateStatusRequestDTO requestDTO
+    ) {
+        try {
+            BookingResponseDTO updatedBooking = bookingService.updateBookingStatus(requestDTO);
+            return ResponseEntity.ok(updatedBooking);
+        } catch (RuntimeException e) {
+            ErrorResponseDTO error = new ErrorResponseDTO(
+                    HttpStatus.BAD_REQUEST.value(),
+                    "Update Status Error",
+                    e.getMessage()
+            );
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (Exception e) {
+            ErrorResponseDTO error = new ErrorResponseDTO(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "Internal Error",
+                    "Lỗi khi cập nhật trạng thái: " + e.getMessage()
             );
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);

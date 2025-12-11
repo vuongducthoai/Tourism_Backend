@@ -18,5 +18,6 @@ public class UserReaponseDTO {
     private BigDecimal coinBalance;
     private String email;
     private String avatar;
+    private Boolean status;
 }
 
