@@ -82,5 +82,16 @@ vnpay:
   command: pay
   order-type: other
 
-
-
+payos:
+  client:
+    id: 962cb7bd-af11-4087-9a97-421dcb15d5e9
+  api:
+    key: 2c6a084b-148f-4843-95f8-2e2728035177
+  checksum:
+    key: ce10a03ef7a6a2c8e140961232f559de10c2d80d7d8741b0a4e0be0b884d1516
+  return:
+    url: "http://localhost:3000/payment-success"
+  cancel:
+    url: "http://localhost:3000/payment-cancel"
+  webhook:
+    url:

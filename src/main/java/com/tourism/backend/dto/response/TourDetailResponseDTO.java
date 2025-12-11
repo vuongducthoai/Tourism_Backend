@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class TourDetailResponseDTO {
 
-    // --- 1. THÔNG TIN CƠ BẢN (HEADER) ---
+    // --- (HEADER) ---
     private Integer tourId;
     private String tourCode;
     private String tourName;
@@ -33,25 +33,20 @@ public class TourDetailResponseDTO {
     private String tripTransportation;
     private String idealTime;
 
-    // --- 2. THÔNG TIN GIÁ TỔNG QUAN (HEADER PRICING) ---
-    // Dùng để hiển thị giá "tốt nhất" hoặc "giá từ" ở ngay đầu trang
-    private BigDecimal originalPrice;       // Giá gốc (Gạch ngang)
-    private BigDecimal salePrice;           // Giá bán (Màu đỏ)
-    private BigDecimal couponDiscount;      // Tiền giảm từ Coupon
-    private String bestCouponCode;          // Mã coupon áp dụng
-    private BigDecimal finalPrice;          // Giá cuối cùng (Sau khi trừ hết)
-    private Integer totalDiscountPercentage; // % Giảm tổng
+    // --- 2. HEADER PRICING ---
+    private BigDecimal originalPrice;
+    private BigDecimal salePrice;
+    private BigDecimal couponDiscount;
+    private String bestCouponCode;
+    private BigDecimal finalPrice;
+    private Integer totalDiscountPercentage;
 
-    // --- 3. CÁC DANH SÁCH CHI TIẾT ---
-    private List<String> images;            // Gallery ảnh
-    private List<ItineraryDTO> itinerary;   // Lịch trình chi tiết
-    private List<DepartureDTO> departures;  // Lịch khởi hành (Calendar)
-    private PolicyDTO policy;               // Chính sách
+    private List<String> images;
+    private String videoUrl;
+    private List<ItineraryDTO> itinerary;
+    private List<DepartureDTO> departures;
+    private PolicyDTO policy;
     private BranchContactDTO branchContact;
-
-    // ==========================================
-    //      INNER CLASSES (DTO CON)
-    // ==========================================
 
     @Data
     @Builder
@@ -59,7 +54,7 @@ public class TourDetailResponseDTO {
         private Integer dayNumber;
         private String title;
         private String meals;
-        private String details; // HTML content
+        private String details;
     }
 
     @Data
@@ -71,15 +66,12 @@ public class TourDetailResponseDTO {
         private List<TransportDTO> transports;
         private List<PricingDTO> pricings;
 
-        // Coupon Departure-specific
         private String departureCouponCode;
         private BigDecimal departureCouponDiscount;
 
-        // Coupon Global
         private String globalCouponCode;
         private BigDecimal globalCouponDiscount;
 
-        // Tổng discount từ cả 2 coupon
         private BigDecimal totalDiscountAmount;
     }
 

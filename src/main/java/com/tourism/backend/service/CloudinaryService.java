@@ -3,7 +3,9 @@ package com.tourism.backend.service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Map;
 
 public interface CloudinaryService {
-    public String uploadImage(MultipartFile file, String folder) throws IOException;
+    String uploadImage(MultipartFile file, String folder) throws IOException;
+    Map<String, Object> uploadVideo(MultipartFile file);
 }

@@ -151,7 +151,7 @@ public class TourServiceImpl implements TourService {
     @Transactional(readOnly = true)
     public TourDetailResponseDTO getTourDetail(String tourCode) {
         // ============================================
-        // 1. LẤY THÔNG TIN TOUR
+        // TOUR
         // ============================================
         Tour tour = tourRepository.findByTourCode(tourCode)
                 .orElseThrow(() -> new RuntimeException("Tour not found: " + tourCode));
@@ -161,8 +161,9 @@ public class TourServiceImpl implements TourService {
             throw new RuntimeException("No departures found for tour: " + tourCode);
         }
 
+
         // ============================================
-        // 2. XỬ LÝ TỪNG DEPARTURE
+        // DEPARTURE
         // ============================================
         List<TourDetailResponseDTO.DepartureDTO> departureDTOs = new ArrayList<>();
         LocalDate today = LocalDate.now();
@@ -417,6 +418,16 @@ public class TourServiceImpl implements TourService {
         }
 
         // ============================================
+        // 4. MAP Video
+        // ============================================
+        String videoUrl = tour.getMediaList().stream()
+                .filter(TourMedia::getIsPrimary)
+                .map(TourMedia::getMediaUrl)
+                .findFirst()
+                .orElse(null);
+
+
+        // ============================================
         // 5. MAP ITINERARY
         // ============================================
         List<TourDetailResponseDTO.ItineraryDTO> itinerary = new ArrayList<>();
@@ -495,6 +506,7 @@ public class TourServiceImpl implements TourService {
                 .totalDiscountPercentage(totalDiscountPercent)
                 // Lists
                 .images(images)
+                .videoUrl(videoUrl)
                 .itinerary(itinerary)
                 .departures(departureDTOs)
                 .policy(policyDTO)

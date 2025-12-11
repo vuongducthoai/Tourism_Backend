@@ -34,6 +34,7 @@ public class BookingController {
     @PostMapping("/create")
     public ResponseEntity<BookingDetailResponseDTO> createBooking(@RequestBody BookingRequestDTO request) {
         BookingDetailResponseDTO response = bookingService.createBooking(request);
+        System.out.println(response.getBookingCode());
         return ResponseEntity.ok(response);
     }
 

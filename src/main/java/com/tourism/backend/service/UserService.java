@@ -3,6 +3,7 @@ package com.tourism.backend.service;
 import com.tourism.backend.dto.request.RegisterRequestDTO;
 import com.tourism.backend.dto.requestDTO.UserUpdateRequestDTO;
 import com.tourism.backend.dto.response.RegisterResponseDTO;
+import com.tourism.backend.dto.response.UserResponseDTO;
 import com.tourism.backend.dto.responseDTO.UserReaponseDTO;
 import org.apache.coyote.BadRequestException;
 
@@ -14,5 +15,6 @@ public interface UserService {
     String verifyEmail(String token) throws com.tourism.backend.exception.BadRequestException;
     void resendVerificationEmail(String email);
     UserReaponseDTO updateUser(Integer userID, UserUpdateRequestDTO updateDTO) throws IOException;
+    UserResponseDTO getUserProfile(String email);
 }
 
