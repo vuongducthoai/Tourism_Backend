@@ -82,6 +82,7 @@ public class AuthServiceImpl implements AuthService {
                         .role(user.getRole().name())
                         .provinceName(user.getProvinceName())
                         .districtName(user.getDistrictName())
+                        .coinBalance(user.getCoinBalance())
                         .build())
                 .build();
     }

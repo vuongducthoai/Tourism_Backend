@@ -21,7 +21,6 @@ public class Payment extends BaseEntity{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer paymentID;
 
-
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
@@ -29,7 +28,7 @@ public class Payment extends BaseEntity{
     private BigDecimal amount;
     private String transactionId;
     private String bankTransactionNo;
-    private String bankCode;
+    private String bankCode; // Mã ngân hàng người chuyển khoản ( VCB, TCB, MB)
     private LocalDateTime paymentDate;
 
     @NotBlank(message = "Account name is required")
@@ -49,6 +48,12 @@ public class Payment extends BaseEntity{
 
     @Column(name = "time_limit")
     private LocalDateTime timeLimit;
+ 
+    @Column(name = "payment_description", length = 500)
+    private String paymentDescription; //Nội dung chuyển khoản
+
+    @Column(name = "transaction_datetime")
+    private LocalDateTime transactionDatetime; // Thời gian giao dịch thực tế từ ngân hàng
 
     // OneToOne with Booking
     @OneToOne(fetch = FetchType.LAZY)

@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -14,4 +16,7 @@ public class PaymentResponseDTO {
     private String message;
     private String paymentUrl;
     private String transactionId;
+    private String qrCode;
+    private String status;
+    private BigDecimal amount;
 }

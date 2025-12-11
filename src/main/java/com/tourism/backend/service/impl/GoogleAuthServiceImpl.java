@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -128,6 +129,7 @@ public class GoogleAuthServiceImpl implements GoogleAuthService {
                             .role(Role.CUSTOMER)
                             .status(true)
                             .isEmailVerified(true)
+                            .coinBalance(BigDecimal.valueOf(0))
                             .build();
 
                     return userRepository.save(newUser);

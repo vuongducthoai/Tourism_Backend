@@ -6,9 +6,11 @@ import com.tourism.backend.dto.requestDTO.UserSearchRequestDTO;
 import com.tourism.backend.dto.requestDTO.UserStatusUpdateRequestDTO;
 import com.tourism.backend.dto.requestDTO.UserUpdateRequestDTO;
 import com.tourism.backend.dto.response.RegisterResponseDTO;
+import com.tourism.backend.dto.response.UserResponseDTO;
 import com.tourism.backend.dto.responseDTO.UserReaponseDTO;
 import com.tourism.backend.entity.User;
 import com.tourism.backend.enums.Role;
+import com.tourism.backend.exception.ResourceNotFoundException;
 import com.tourism.backend.repository.UserRepository;
 import com.tourism.backend.service.EmailService;
 import com.tourism.backend.service.CloudinaryService;
@@ -80,6 +82,13 @@ public class UserServiceImpl implements UserService {
         User updatedUser = userRepository.save(user);
         
         return userConverter.convertToUserResponseDTO(updatedUser);
+    }
+
+    @Override
+    public UserResponseDTO getUserProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+        return new UserResponseDTO(user);
     }
 
     @Override

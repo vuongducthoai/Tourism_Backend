@@ -21,6 +21,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -47,19 +48,30 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/tours/**",
                                 "/api/locations/**",
-                                "/api/auth/**",
+                                "/api/auth/register",
+                                "/api/auth/login",
+                                "/api/auth/verify-email",
+                                "/api/auth/resend-verification",
+                                "/api/auth/google/login",
+                                "/api/auth/refresh-token",
+                                "/api/auth/logout",
+                                "/api/auth/logout-all",
                                 "/oauth2/**",
                                 "/login/oauth2/**",
                                 "/error",
-                                "/api/users/**",
-                                "/api/favorite-tours/**",
+                                "/api/tour/{tourId}/media",
                                 "/api/bookings/**",
+                                "/api/payment/check-status/**",
+                                "/api/payment/**",
+                               "/api/auth/profile",
+                                "/api/users/**",
                                 "/api/reviews/**",
+                                "/api/favorite-tours/**",
                                 "/ws/**"
+                          
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(
-
                                 "/api/payment/**"
 
                         ).authenticated()
@@ -80,11 +92,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
+        configuration.setExposedHeaders(Arrays.asList("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

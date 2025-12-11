@@ -45,14 +45,14 @@ public class PaymentController {
 
             PaymentResponseDTO response = paymentService.createVNPayPayment(request, httpRequest);
 
-            log.info("✅ Payment created successfully");
+            log.info(" Payment created successfully");
             log.info("Payment URL: {}", response.getPaymentUrl());
             log.info("Transaction ID: {}", response.getTransactionId());
 
             return ResponseEntity.ok(response);
 
         } catch (IllegalArgumentException e) {
-            log.error("❌ Validation error: {}", e.getMessage());
+            log.error(" Validation error: {}", e.getMessage());
             return ResponseEntity
                     .badRequest()
                     .body(Map.of(
@@ -60,7 +60,7 @@ public class PaymentController {
                             "message", e.getMessage()
                     ));
         } catch (RuntimeException e) {
-            log.error("❌ Business logic error: {}", e.getMessage());
+            log.error("Business logic error: {}", e.getMessage());
             return ResponseEntity
                     .badRequest()
                     .body(Map.of(
@@ -68,7 +68,7 @@ public class PaymentController {
                             "message", e.getMessage()
                     ));
         } catch (Exception e) {
-            log.error("❌ Unexpected error creating payment", e);
+            log.error("Unexpected error creating payment", e);
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of(
@@ -98,20 +98,20 @@ public class PaymentController {
 
             // Redirect based on result
             if (result == 1) {
-                log.info("✅ Payment SUCCESS for booking: {}", bookingCode);
+                log.info("Payment SUCCESS for booking: {}", bookingCode);
                 response.sendRedirect(String.format("%s/payment-success?bookingCode=%s",
                         frontendUrl, bookingCode));
             } else if (result == 0) {
-                log.warn("⚠️ Payment FAILED for booking: {}", bookingCode);
+                log.warn("Payment FAILED for booking: {}", bookingCode);
                 response.sendRedirect(String.format("%s/payment-failed?bookingCode=%s",
                         frontendUrl, bookingCode));
             } else {
-                log.error("❌ Invalid signature for booking: {}", bookingCode);
+                log.error("Invalid signature for booking: {}", bookingCode);
                 response.sendRedirect(String.format("%s/payment-error?reason=invalid_signature",
                         frontendUrl));
             }
         } catch (Exception e) {
-            log.error("❌ Callback processing error", e);
+            log.error("Callback processing error", e);
             String errorParam = bookingCode != null ?
                     String.format("?bookingCode=%s&error=%s", bookingCode, e.getMessage()) :
                     "?error=" + e.getMessage();
@@ -136,5 +136,169 @@ public class PaymentController {
         // Fallback to transaction reference if extraction fails
         log.warn("Could not extract booking code from order info: {}. Using vnp_TxnRef", orderInfo);
         return params.get("vnp_TxnRef");
+    }
+
+    @GetMapping("/check-status/{orderCode}")
+    public ResponseEntity<?> checkPaymentStatus(@PathVariable Long orderCode) {
+        log.info("Checking payment status for orderCode: {}", orderCode);
+
+        try {
+            PaymentResponseDTO response = paymentService.getPaymentStatusAndUpdate(orderCode);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error checking payment status", e);
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/payos/create")
+    public ResponseEntity<?> createPayOSPayment(@RequestBody PaymentRequestDTO request) {
+        try {
+            log.info("=== Creating PayOS payment ===");
+            log.info("Booking Code: {}", request.getBookingCode());
+            log.info("Amount: {}", request.getAmount());
+
+            // Validate request
+            if (request.getBookingCode() == null || request.getBookingCode().isEmpty()) {
+                throw new IllegalArgumentException("Booking code is required");
+            }
+            if (request.getAmount() == null || request.getAmount() <= 0) {
+                throw new IllegalArgumentException("Amount must be greater than 0");
+            }
+
+            PaymentResponseDTO response = paymentService.createPayOSPayment(request);
+
+            log.info("Payment created successfully");
+            log.info("Payment URL: {}", response.getPaymentUrl());
+            log.info("Transaction ID: {}", response.getTransactionId());
+            log.info("QR Code: {}", response.getQrCode());
+
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            log.error("Validation error: {}", e.getMessage());
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of(
+                            "code", "VALIDATION_ERROR",
+                            "message", e.getMessage()
+                    ));
+        } catch (RuntimeException e) {
+            log.error("Business logic error: {}", e.getMessage());
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of(
+                            "code", "PAYMENT_ERROR",
+                            "message", e.getMessage()
+                    ));
+        } catch (Exception e) {
+            log.error("Unexpected error creating payment", e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "code", "INTERNAL_ERROR",
+                            "message", "Đã xảy ra lỗi khi tạo thanh toán. Vui lòng thử lại."
+                    ));
+        }
+    }
+
+    @PostMapping("/payos/webhook")
+    public ResponseEntity<?> handlePayOSWebhook(
+            @RequestBody String webhookData,
+            @RequestHeader(value = "x-payos-signature", required = false) String signature) {
+
+        log.info("=== PayOS Webhook Received ===");
+        log.info("Webhook Data: {}", webhookData);
+        log.info("Signature: {}", signature);
+
+        try {
+            int result = paymentService.handlePayOSWebhook(webhookData);
+
+            if (result == 1) {
+                log.info("Webhook processed successfully - Payment SUCCESS");
+                return ResponseEntity.ok(Map.of(
+                        "code", "00",
+                        "message", "Webhook processed successfully"
+                ));
+            } else {
+                log.warn("Webhook processed - Payment FAILED or CANCELLED");
+                return ResponseEntity.ok(Map.of(
+                        "code", "01",
+                        "message", "Payment failed or cancelled"
+                ));
+            }
+
+        } catch (Exception e) {
+            log.error("Webhook processing error", e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "code", "ERROR",
+                            "message", "Webhook processing failed: " + e.getMessage()
+                    ));
+        }
+    }
+
+    @GetMapping("/payos/return")
+    public void payosReturn(
+            @RequestParam(required = false) String bookingCode,
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long orderCode,
+            HttpServletResponse response) throws IOException {
+
+        log.info("=== PayOS Return URL ===");
+        log.info("Booking Code: {}", bookingCode);
+        log.info("Code: {}", code);
+        log.info("Status: {}", status);
+        log.info("Order Code: {}", orderCode);
+
+        try {
+            if ("00".equals(code) && "PAID".equals(status)) {
+                log.info("Payment SUCCESS for booking: {}", bookingCode);
+                response.sendRedirect(String.format("%s/payment-success?bookingCode=%s",
+                        frontendUrl, bookingCode));
+            } else {
+                log.warn("⚠Payment FAILED for booking: {}", bookingCode);
+                response.sendRedirect(String.format("%s/payment-failed?bookingCode=%s",
+                        frontendUrl, bookingCode));
+            }
+        } catch (Exception e) {
+            log.error("Return URL processing error", e);
+            response.sendRedirect(String.format("%s/payment-error?bookingCode=%s&error=%s",
+                    frontendUrl, bookingCode, e.getMessage()));
+        }
+    }
+
+    @GetMapping("/payos/cancel")
+    public void payosCancel(
+            @RequestParam(required = false) String bookingCode,
+            HttpServletResponse response) throws IOException {
+
+        log.info("=== PayOS Cancel URL ===");
+        log.info("Booking Code: {}", bookingCode);
+
+        response.sendRedirect(String.format("%s/payment-cancelled?bookingCode=%s",
+                frontendUrl, bookingCode));
+    }
+
+    @GetMapping("/payos/status/{orderCode}")
+    public ResponseEntity<?> getPaymentStatus(@PathVariable Long orderCode) {
+        try {
+            log.info("=== Checking payment status for orderCode: {} ===", orderCode);
+
+            PaymentResponseDTO response = paymentService.getPaymentStatus(orderCode);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Error checking payment status", e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "code", "ERROR",
+                            "message", "Error checking payment status: " + e.getMessage()
+                    ));
+        }
     }
 }

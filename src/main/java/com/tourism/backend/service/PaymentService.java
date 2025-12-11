@@ -9,4 +9,9 @@ import java.util.Map;
 public interface PaymentService {
     PaymentResponseDTO createVNPayPayment(PaymentRequestDTO request, HttpServletRequest httpRequest);
     int handleVNPayCallback(Map<String, String> params);
+    PaymentResponseDTO createPayOSPayment(PaymentRequestDTO request);
+    int handlePayOSWebhook(String webhookData);
+    PaymentResponseDTO getPaymentStatus(Long orderCode);
+
+    PaymentResponseDTO getPaymentStatusAndUpdate(Long orderCode);
 }

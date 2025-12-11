@@ -4,6 +4,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,5 +28,6 @@ public class LoginResponse {
         private String role;
         private String provinceName;
         private String districtName;
+        private BigDecimal coinBalance;
     }
 }

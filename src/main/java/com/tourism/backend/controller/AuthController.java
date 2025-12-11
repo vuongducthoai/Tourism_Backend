@@ -7,6 +7,7 @@ import com.tourism.backend.dto.request.RegisterRequestDTO;
 import com.tourism.backend.dto.response.LoginResponse;
 import com.tourism.backend.dto.response.RegisterResponseDTO;
 import com.tourism.backend.dto.response.TokenResponse;
+import com.tourism.backend.dto.response.UserResponseDTO;
 import com.tourism.backend.exception.BadRequestException;
 import com.tourism.backend.exception.NotFoundException;
 import com.tourism.backend.service.AuthService;
@@ -18,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -32,6 +35,20 @@ public class AuthController {
     private final UserService userService;
     private final AuthService authService;
     private final GoogleAuthService googleAuthService;
+
+    @GetMapping("/profile")
+    public ResponseEntity<?> getMyProfile() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            return ResponseEntity.status(401).body("Unauthorized");
+        }
+
+        String email = authentication.getName();
+        UserResponseDTO userProfile = userService.getUserProfile(email);
+
+        return ResponseEntity.ok(userProfile);
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequestDTO requestDTO) {

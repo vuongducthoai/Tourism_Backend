@@ -154,7 +154,8 @@ public class BookingServiceImpl implements BookingService {
             passengerEntities.add(pEntity);
         }
 
-        // XỬ LÝ NHIỀU COUPON
+        BigDecimal totalBeforeDiscount = subTotal.add(subSurcharge);
+
         BigDecimal couponDiscount = BigDecimal.ZERO;
         List<Coupon> appliedCoupons = new ArrayList<>();
 
@@ -163,9 +164,13 @@ public class BookingServiceImpl implements BookingService {
                 Coupon coupon = couponRepository.findByCouponCode(code)
                         .orElseThrow(() -> new RuntimeException("Coupon code not found: " + code));
 
-                // Kiểm tra minOrderValue
-                if (coupon.getMinOrderValue() != null && subTotal.compareTo(coupon.getMinOrderValue()) < 0) {
-                    throw new RuntimeException("Order total must be at least " + coupon.getMinOrderValue() + " to use coupon " + code);
+                if (coupon.getMinOrderValue() != null && totalBeforeDiscount.compareTo(coupon.getMinOrderValue()) < 0) {
+                    throw new RuntimeException(
+                            "Order total must be at least " +
+                                    String.format("%,.0f", coupon.getMinOrderValue()) +
+                                    " VND to use coupon " + code +
+                                    ". Current total: " + String.format("%,.0f", totalBeforeDiscount) + " VND"
+                    );
                 }
 
                 couponDiscount = couponDiscount.add(BigDecimal.valueOf(coupon.getDiscountAmount()));
@@ -197,7 +202,7 @@ public class BookingServiceImpl implements BookingService {
             booking.setUser(user);
         }
 
-        BigDecimal finalTotal = subTotal.add(subSurcharge).subtract(couponDiscount).subtract(pointDiscount);
+        BigDecimal finalTotal = totalBeforeDiscount.subtract(couponDiscount).subtract(pointDiscount);
         if (finalTotal.compareTo(BigDecimal.ZERO) < 0) {
             finalTotal = BigDecimal.ZERO;
         }
@@ -254,7 +259,6 @@ public class BookingServiceImpl implements BookingService {
                         .build())
                 .collect(Collectors.toList());
 
-        // SỬA: Map transports
         List<DepartureTransport> transports = departure.getTransports();
         BookingFlightDTO outbound = null;
         BookingFlightDTO inbound = null;
@@ -268,13 +272,11 @@ public class BookingServiceImpl implements BookingService {
             }
         }
 
-        // Lấy danh sách coupon codes
         List<String> appliedCouponCodes = new ArrayList<>();
         if (booking.getAppliedCouponCodes() != null && !booking.getAppliedCouponCodes().isEmpty()) {
             appliedCouponCodes = Arrays.asList(booking.getAppliedCouponCodes().split(","));
         }
 
-        // Tính tiền đã trả (Giả sử mới tạo là 0)
         BigDecimal paid = BigDecimal.ZERO;
 
         return BookingDetailResponseDTO.builder()

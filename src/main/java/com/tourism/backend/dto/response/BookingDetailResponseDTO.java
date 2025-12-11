@@ -39,6 +39,6 @@ public class BookingDetailResponseDTO {
         private String dateOfBirth; // dd/MM/yyyy
         private String gender;
         private String type;        // Người lớn, Trẻ em
-        private Boolean singleRoom; // Có phòng đơn không
+        private Boolean singleRoom;
     }
 }

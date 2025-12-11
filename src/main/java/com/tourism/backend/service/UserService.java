@@ -5,6 +5,7 @@ import com.tourism.backend.dto.requestDTO.UserSearchRequestDTO;
 import com.tourism.backend.dto.requestDTO.UserStatusUpdateRequestDTO;
 import com.tourism.backend.dto.requestDTO.UserUpdateRequestDTO;
 import com.tourism.backend.dto.response.RegisterResponseDTO;
+import com.tourism.backend.dto.response.UserResponseDTO;
 import com.tourism.backend.dto.responseDTO.UserReaponseDTO;
 import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,7 @@ public interface UserService {
     String verifyEmail(String token) throws com.tourism.backend.exception.BadRequestException;
     void resendVerificationEmail(String email);
     UserReaponseDTO updateUser(Integer userID, UserUpdateRequestDTO updateDTO) throws IOException;
+    UserResponseDTO getUserProfile(String email);
     Page<UserReaponseDTO> searchUsers(UserSearchRequestDTO searchDTO, Pageable pageable);
     UserReaponseDTO updateUserStatus(UserStatusUpdateRequestDTO requestDTO);
 }

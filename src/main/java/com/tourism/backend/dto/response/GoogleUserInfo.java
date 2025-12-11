@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,4 +19,5 @@ public class GoogleUserInfo {
     private String familyName;
     private String picture;
     private Boolean verifiedEmail;
+    private BigDecimal coinBalance = BigDecimal.ZERO;
 }
