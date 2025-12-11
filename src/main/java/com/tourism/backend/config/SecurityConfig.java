@@ -62,13 +62,18 @@ public class SecurityConfig {
                                 "/api/tour/{tourId}/media",
                                 "/api/bookings/**",
                                 "/api/payment/check-status/**",
-                                "/api/payment/**"
+                                "/api/payment/**",
+                               "/api/auth/profile",
+                                "/api/users/**",
+                                "/api/reviews/**",
+                                "/api/favorite-tours/**",
+                                "/ws/**"
+                          
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(
-                                "/api/auth/profile",
-                                "/api/users/**",
-                                "/api/reviews/**"
+                                "/api/payment/**"
+
                         ).authenticated()
                         // Tất cả request khác cần authenticated
                         .anyRequest().authenticated()

@@ -1,8 +1,10 @@
 // File: com.tourism.backend.service.impl.ReviewServiceImpl.java (CẬP NHẬT)
 package com.tourism.backend.service.impl;
 
+import com.tourism.backend.convert.BookingConverter;
 import com.tourism.backend.convert.ReviewConverter; // Import mới
 import com.tourism.backend.dto.requestDTO.ReviewRequestDTO;
+import com.tourism.backend.dto.responseDTO.BookingResponseDTO;
 import com.tourism.backend.dto.responseDTO.ReviewResponseDTO; // Import mới
 import com.tourism.backend.entity.*;
 import com.tourism.backend.enums.BookingStatus;
@@ -29,7 +31,8 @@ public class ReviewServiceImpl implements ReviewService {
     private final CloudinaryService cloudinaryService;
     private final ImageReviewRepository imageReviewRepository;
     private final ReviewConverter reviewConverter; // Inject Converter mới
-
+    private final BookingConverter bookingConverter;
+    private final WebSocketService webSocketService;
     private static final int MIN_COMMENT_LENGTH = 10;
     private static final BigDecimal COIN_RATE = new BigDecimal("1");
 
@@ -97,6 +100,11 @@ public class ReviewServiceImpl implements ReviewService {
         // 7. Cập nhật trạng thái Booking
         booking.setBookingStatus(BookingStatus.REVIEWED);
         bookingRepository.save(booking);
+        BookingResponseDTO responseDTO = bookingConverter.convertToBookingResponseDTO(booking);
+        webSocketService.notifyAdminBookingUpdate(responseDTO);
+//        if (booking.getUser() != null) {
+//            webSocketService.notifyUserBookingUpdate(booking.getUser().getUserID(), responseDTO);
+//        }
 
         // 8. Chuyển đổi sang DTO trước khi trả về
         return reviewConverter.toReviewResponseDTO(savedReview); // <-- TRẢ VỀ DTO

@@ -2,6 +2,8 @@ package com.tourism.backend.service.impl;
 
 import com.tourism.backend.convert.UserConverter;
 import com.tourism.backend.dto.request.RegisterRequestDTO;
+import com.tourism.backend.dto.requestDTO.UserSearchRequestDTO;
+import com.tourism.backend.dto.requestDTO.UserStatusUpdateRequestDTO;
 import com.tourism.backend.dto.requestDTO.UserUpdateRequestDTO;
 import com.tourism.backend.dto.response.RegisterResponseDTO;
 import com.tourism.backend.dto.response.UserResponseDTO;
@@ -12,11 +14,14 @@ import com.tourism.backend.exception.ResourceNotFoundException;
 import com.tourism.backend.repository.UserRepository;
 import com.tourism.backend.service.EmailService;
 import com.tourism.backend.service.CloudinaryService;
+import com.tourism.backend.service.MailService;
 import com.tourism.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.tourism.backend.exception.BadRequestException;
 import com.tourism.backend.exception.NotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +42,8 @@ public class UserServiceImpl implements UserService {
     private final UserConverter userConverter;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
-
+    private final MailService mailService;
+    private final WebSocketService webSocketService;
     private final CloudinaryService cloudinaryService;
     @Override
     @Transactional(readOnly = true)
@@ -171,6 +177,40 @@ public class UserServiceImpl implements UserService {
         emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), newToken);
 
         log.info("Verification email resent to: {}", email);
+    }
+
+    @Override
+    public Page<UserReaponseDTO> searchUsers(UserSearchRequestDTO searchDTO, Pageable pageable) {
+
+        Page<User> userPage = userRepository.searchUsers(searchDTO, pageable);
+
+        // Map status thủ công vì ModelMapper có thể chưa map
+        return userPage.map(user -> {
+            UserReaponseDTO dto = userConverter.convertToUserResponseDTO(user);
+            dto.setStatus(user.getStatus());
+            return dto;
+        });
+    }
+
+    @Override
+    @Transactional
+    public UserReaponseDTO updateUserStatus(UserStatusUpdateRequestDTO requestDTO) {
+        User user = userRepository.findByUserID(requestDTO.getUserID())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setStatus(requestDTO.getStatus());
+        User updatedUser = userRepository.save(user);
+
+        // Gửi Email thông báo
+        mailService.sendAccountStatusEmail(updatedUser, requestDTO.getStatus(), requestDTO.getReason());
+
+        UserReaponseDTO responseDTO = userConverter.convertToUserResponseDTO(updatedUser);
+        responseDTO.setStatus(updatedUser.getStatus());
+
+        // Realtime WebSocket notification
+        webSocketService.notifyUserUpdate(responseDTO); // Bạn cần thêm hàm này bên WebSocketService tương tự notifyAdminBookingUpdate
+
+        return responseDTO;
     }
 }
 

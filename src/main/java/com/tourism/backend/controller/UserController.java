@@ -1,10 +1,15 @@
 package com.tourism.backend.controller;
 
+import com.tourism.backend.dto.requestDTO.UserSearchRequestDTO;
+import com.tourism.backend.dto.requestDTO.UserStatusUpdateRequestDTO;
 import com.tourism.backend.dto.requestDTO.UserUpdateRequestDTO;
 import com.tourism.backend.dto.responseDTO.ErrorResponseDTO;
 import com.tourism.backend.dto.responseDTO.UserReaponseDTO;
 import com.tourism.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -72,6 +77,26 @@ public class UserController {
                     "Lỗi khi cập nhật thông tin user: " + e.getMessage()
             );
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+    @PostMapping("/admin/search")
+    public ResponseEntity<Page<UserReaponseDTO>> searchUsers(
+            @RequestBody UserSearchRequestDTO searchDTO,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(userService.searchUsers(searchDTO, pageable));
+    }
+
+    @PostMapping("/admin/update-status")
+    public ResponseEntity<?> updateUserStatus(@RequestBody UserStatusUpdateRequestDTO requestDTO) {
+        try {
+            UserReaponseDTO updatedUser = userService.updateUserStatus(requestDTO);
+            return ResponseEntity.ok(updatedUser);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponseDTO(500, "Error", e.getMessage()));
         }
     }
 }

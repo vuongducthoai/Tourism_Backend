@@ -2,6 +2,7 @@ package com.tourism.backend.entity;
 import com.tourism.backend.enums.PaymentMethod;
 import com.tourism.backend.enums.PaymentStatus;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -30,21 +31,24 @@ public class Payment extends BaseEntity{
     private String bankCode; // Mã ngân hàng người chuyển khoản ( VCB, TCB, MB)
     private LocalDateTime paymentDate;
 
+    @NotBlank(message = "Account name is required")
+    @Column(name = "account_name", nullable = false)
+    private String accountName;
+
+    @NotBlank(message = "Account number is required")
+    @Column(name = "account_number", nullable = false)
+    private String accountNumber;
+
+    @NotBlank(message = "Bank name is required")
+    @Column(name = "bank_name", nullable = false)
+    private String bank;
+
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
     @Column(name = "time_limit")
     private LocalDateTime timeLimit;
-
-    @Column(name = "account_name", length = 255)
-    private String accountName;
-
-    @Column(name = "account_number", length = 50)
-    private String accountNumber;
-
-    @Column(name = "bank_name", length = 255)
-    private String bankName;  //Tên ngân hàng người chuyển
-
+ 
     @Column(name = "payment_description", length = 500)
     private String paymentDescription; //Nội dung chuyển khoản
 

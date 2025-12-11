@@ -20,7 +20,7 @@ public class BookingConverter {
 
     public BookingResponseDTO convertToBookingResponseDTO(Booking booking) {
         // Map các trường từ Booking entity (sử dụng ModelMapper)
-        BookingResponseDTO dto = modelMapper.map(booking, BookingResponseDTO.class);
+        BookingResponseDTO dto = new BookingResponseDTO();
 
         // Map thủ công các trường từ Booking entity (dòng 18-32 trong BookingResponseDTO)
         dto.setBookingID(booking.getBookingID());
@@ -77,6 +77,9 @@ public class BookingConverter {
             dto.setPaymentID(booking.getPayment().getPaymentID());
             dto.setAmount(booking.getPayment().getAmount());
             dto.setTimeLimit(booking.getPayment().getTimeLimit());
+            dto.setBank(booking.getPayment().getBank());
+            dto.setAccountName(booking.getPayment().getAccountName());
+            dto.setAccountNumber(booking.getPayment().getAccountNumber());
         }
 
         // Set list passengers từ BookingPassenger
@@ -86,7 +89,11 @@ public class BookingConverter {
                     .collect(Collectors.toList());
             dto.setPassengers(passengerDTOs);
         }
-
+        if (booking.getRefundInformation() != null) {
+            dto.setRefundBank(booking.getRefundInformation().getBank());
+            dto.setRefundAccountNumber(booking.getRefundInformation().getAccountNumber());
+            dto.setRefundAccountName(booking.getRefundInformation().getAccountName());
+        }
         return dto;
     }
 
