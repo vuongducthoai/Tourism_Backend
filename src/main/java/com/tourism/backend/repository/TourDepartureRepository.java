@@ -24,7 +24,6 @@ public interface TourDepartureRepository extends JpaRepository<TourDeparture, In
     @Query("UPDATE TourDeparture t SET t.availableSlots = t.availableSlots - :amount " +
             "WHERE t.departureID = :id AND t.availableSlots >= :amount")
     int decreaseAvailableSlots(@Param("id") Integer id, @Param("amount") Integer amount);
-
     List<TourDeparture> findByTour_TourIDAndDepartureDateAfterAndStatusTrueOrderByDepartureDateAsc(
             Integer tourId,
             LocalDate currentDate
@@ -34,4 +33,5 @@ public interface TourDepartureRepository extends JpaRepository<TourDeparture, In
     @Modifying
     @Query("UPDATE TourDeparture t SET t.coupon = NULL WHERE t.coupon.couponID = :couponId")
     void removeCouponFromDepartures(Integer couponId);
+    List<TourDeparture> findAllById(Iterable<Integer> ids);
 }

@@ -71,4 +71,8 @@ public interface LocationRepository extends JpaRepository<Location, Integer> {
     Long countToursAsEndPoint(@Param("locationId") Integer locationId);
 
     List<Location> findAllByStatusTrue();
+    @Query("SELECT DISTINCT l FROM Location l " +
+            "JOIN Tour t ON (t.startLocation.locationID = l.locationID OR t.endLocation.locationID = l.locationID) " +
+            "WHERE t.status = true")
+    List<Location> findLocationsWithActiveTours();
 }
