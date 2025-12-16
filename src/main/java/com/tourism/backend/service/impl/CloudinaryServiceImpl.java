@@ -4,6 +4,7 @@ import com.cloudinary.Cloudinary;
 import com.tourism.backend.exception.VideoUploadException;
 import com.tourism.backend.service.CloudinaryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,10 +12,14 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.cloudinary.utils.ObjectUtils;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CloudinaryServiceImpl implements CloudinaryService {
     private final Cloudinary cloudinary;
 
@@ -65,5 +70,33 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         } catch (Exception e) {
             throw new VideoUploadException("Failed to upload video: " + e.getMessage());
         }
+    }
+
+    @Override
+    public void deleteImage(String imageUrl) throws IOException {
+        if(imageUrl == null || imageUrl.isEmpty()){
+            return;
+        }
+
+        String publicId = getPublicIdFromUrl(imageUrl);
+
+        if(publicId != null){
+            log.info("Deleting image from Cloudinary with public_id: {}", publicId);
+            cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", "image"));
+        }
+    }
+
+    private String getPublicIdFromUrl(String url) {
+        try {
+            // Regex để tìm phần sau chữ 'upload/' và phiên bản 'v1234/' (nếu có) và trước đuôi file
+            Pattern pattern = Pattern.compile(".*/upload/(?:v\\d+/)?([^.]+)\\.[a-z]+$");
+            Matcher matcher = pattern.matcher(url);
+            if (matcher.find()) {
+                return matcher.group(1);
+            }
+        } catch (Exception e) {
+            log.error("Error extracting publicId from URL: {}", url, e);
+        }
+        return null;
     }
 }

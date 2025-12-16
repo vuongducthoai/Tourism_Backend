@@ -47,4 +47,7 @@ public class Location extends BaseEntity{
     @OneToMany(mappedBy = "endLocation")
     @JsonIgnore
     private List<Tour> endPoint;
+
+    @Column(name = "status")
+    private boolean status = true;
 }

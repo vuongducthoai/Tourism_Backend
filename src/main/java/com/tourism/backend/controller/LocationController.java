@@ -4,8 +4,7 @@ import com.tourism.backend.dto.requestDTO.RegionRequestDTO;
 import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
 import com.tourism.backend.dto.responseDTO.ErrorResponseDTO;
 import com.tourism.backend.dto.responseDTO.LocationResponseDTO;
-import com.tourism.backend.enums.Region;
-import com.tourism.backend.service.LocationService; // Sử dụng LocationService
+import com.tourism.backend.service.LocationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/locations") // Endpoint chính cho Location
+@RequestMapping("/api/locations")
 @RequiredArgsConstructor
 public class LocationController {
 

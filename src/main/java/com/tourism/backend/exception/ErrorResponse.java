@@ -22,6 +22,7 @@ public class ErrorResponse {
     private String path;
     private List<ValidationError> validationErrors;
 
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -30,12 +31,10 @@ public class ErrorResponse {
         private String message;
     }
 
-    // Constructor đơn giản cho lỗi thông thường
-    public ErrorResponse(int status, String error, String message, String path) {
-        this.timestamp = LocalDateTime.now();
+    public ErrorResponse(int status, String message, LocalDateTime timestamp, String path) {
         this.status = status;
-        this.error = error;
         this.message = message;
+        this.timestamp = timestamp;
         this.path = path;
     }
 }

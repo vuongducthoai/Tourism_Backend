@@ -5,30 +5,26 @@ import com.tourism.backend.convert.TourConvert;
 import com.tourism.backend.convert.TourSpecialConvert;
 import com.tourism.backend.dto.TourCreateDTO;
 import com.tourism.backend.dto.requestDTO.SearchToursRequestDTO;
-import com.tourism.backend.dto.response.DepartureDTO;
-import com.tourism.backend.dto.response.DeparturePricingDTO;
 import com.tourism.backend.dto.response.TourDetailResponseDTO;
-import com.tourism.backend.dto.response.TransportDTO;
 import com.tourism.backend.dto.response.*;
-import com.tourism.backend.dto.responseDTO.TourDepartureDateResponseDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
 import com.tourism.backend.dto.responseDTO.TourSpecialResponseDTO;
 import com.tourism.backend.entity.*;
 import com.tourism.backend.enums.PassengerType;
 import com.tourism.backend.enums.TransportType;
 import com.tourism.backend.repository.CouponRepository;
-import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
 import com.tourism.backend.entity.Location;
 import com.tourism.backend.entity.Tour;
 import com.tourism.backend.entity.TourImage;
-import com.tourism.backend.enums.Region;
 import com.tourism.backend.repository.LocationRepository;
+import com.tourism.backend.repository.TourDepartureRepository;
 import com.tourism.backend.repository.TourRepository;
 import com.tourism.backend.service.CloudinaryService;
 import com.tourism.backend.service.FavoriteTourService;
 import com.tourism.backend.service.LocationService;
 import com.tourism.backend.service.TourService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -46,7 +42,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TourServiceImpl implements TourService {
-    private final TourConvert tourConvert; // 👈 Inject TourConvert
+    private final TourConvert tourConvert;
     private final TourRepository tourRepository;
     private final CloudinaryService cloudinaryService;
     private final LocationRepository locationRepository;
@@ -54,6 +50,7 @@ public class TourServiceImpl implements TourService {
     private final LocationService locationService;
     private final LocationConverter locationConverter;
     private final TourSpecialConvert tourSpecialConvert;
+    private final TourDepartureRepository tourDepartureRepository;
     private final FavoriteTourService favoriteTourService;
     @Override // Ghi đè phương thức từ Interface
     @Transactional
@@ -564,6 +561,36 @@ public class TourServiceImpl implements TourService {
         }
         return response;
 
+    }
+
+    @Override
+    public Page<TourSimpleResponse> getAllToursSimple(Pageable pageable) {
+        Page<Tour> tours = tourRepository.findAll(pageable);
+
+        // Map từ Entity sang DTO gọn nhẹ
+        return tours.map(tour -> TourSimpleResponse.builder()
+                .tourID(tour.getTourID())
+                .tourCode(tour.getTourCode())
+                .tourName(tour.getTourName())
+                .build());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DepartureSimpleResponse> getDeparturesByTour(Integer tourId) {
+        LocalDate tomorrow = LocalDate.now();
+
+        List<TourDeparture> departures = tourDepartureRepository
+                .findByTour_TourIDAndDepartureDateAfterAndStatusTrueOrderByDepartureDateAsc(tourId, tomorrow);
+
+        // Map sang DTO
+        return departures.stream()
+                .map(dep -> DepartureSimpleResponse.builder()
+                        .departureID(dep.getDepartureID())
+                        .departureDate(dep.getDepartureDate())
+                        .availableSlots(dep.getAvailableSlots())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Override

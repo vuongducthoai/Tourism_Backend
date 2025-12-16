@@ -2,6 +2,7 @@ package com.tourism.backend.repository;
 
 import com.tourism.backend.dto.responseDTO.DashboardStatsDTO;
 import com.tourism.backend.entity.Tour;
+import com.tourism.backend.entity.TourDeparture;
 import com.tourism.backend.enums.BookingStatus;
 import com.tourism.backend.repository.custom.TourRepositoryCustom;
 
@@ -71,7 +72,6 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
             "ORDER BY COUNT(b.bookingID) DESC, SUM(b.totalPrice) DESC") // <--- Thêm điều kiện sắp xếp phụ
     List<DashboardStatsDTO.HotTour> getHotToursRaw(@Param("status") BookingStatus status, Pageable pageable);
 
-    // ✅ THÊM: Default method để dễ sử dụng
     default List<DashboardStatsDTO.HotTour> getHotTours(BookingStatus status, int limit) {
         return getHotToursRaw(status, PageRequest.of(0, limit));
     }
@@ -101,7 +101,6 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
         return getToursWithLowBookings(PageRequest.of(0, limit));
     }
 
-    // ✅ SỬA: Thêm JOIN với Booking thay vì dùng collection
     @Query("SELECT new com.tourism.backend.dto.responseDTO.DashboardStatsDTO$TourPerformance(" +
             "t.tourName, COUNT(b.bookingID), SUM(b.totalPrice), " +
             "COALESCE(AVG(r.rating), 0.0)) " +

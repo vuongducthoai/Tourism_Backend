@@ -31,16 +31,13 @@ public class Payment extends BaseEntity{
     private String bankCode; // Mã ngân hàng người chuyển khoản ( VCB, TCB, MB)
     private LocalDateTime paymentDate;
 
-    @NotBlank(message = "Account name is required")
-    @Column(name = "account_name", nullable = false)
+    @Column(name = "account_name", nullable = true)
     private String accountName;
 
-    @NotBlank(message = "Account number is required")
-    @Column(name = "account_number", nullable = false)
+    @Column(name = "account_number", nullable = true)
     private String accountNumber;
 
-    @NotBlank(message = "Bank name is required")
-    @Column(name = "bank_name", nullable = false)
+    @Column(name = "bank_name", nullable = true)
     private String bank;
 
     @Enumerated(EnumType.STRING)

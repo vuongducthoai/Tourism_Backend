@@ -1,6 +1,6 @@
 package com.tourism.backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.tourism.backend.enums.CouponType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "coupons")
@@ -53,6 +52,10 @@ public class Coupon extends BaseEntity{
     @Column(name = "min_order_value")
     private BigDecimal minOrderValue;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "coupon_type", nullable = false)
+    private CouponType couponType = CouponType.GLOBAL;
+
     //Áp dụng cho Ngày khởi hành cụ thể (VD: Giảm giá vét vé giờ chót)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "departure_id")
@@ -60,7 +63,8 @@ public class Coupon extends BaseEntity{
 
     public boolean isValid() {
         LocalDateTime now = LocalDateTime.now();
-        return (startDate == null || now.isAfter(startDate)) &&
+        return !Boolean.TRUE.equals(getIsDeleted()) &&
+                (startDate == null || now.isAfter(startDate)) &&
                 (endDate == null || now.isBefore(endDate)) &&
                 (usageLimit == null || usageCount < usageLimit);
     }
