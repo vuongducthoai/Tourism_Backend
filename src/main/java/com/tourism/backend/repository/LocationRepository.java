@@ -36,4 +36,9 @@ public interface LocationRepository extends JpaRepository<Location, Integer> {
     List<Location> findUniqueStartLocations();
 
     Optional<Location> findByAirportCode(String airportCode);
+
+    @Query("SELECT DISTINCT l FROM Location l " +
+            "JOIN Tour t ON (t.startLocation.locationID = l.locationID OR t.endLocation.locationID = l.locationID) " +
+            "WHERE t.status = true")
+    List<Location> findLocationsWithActiveTours();
 }

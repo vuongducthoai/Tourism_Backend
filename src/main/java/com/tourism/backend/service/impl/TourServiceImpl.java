@@ -572,18 +572,14 @@ public class TourServiceImpl implements TourService {
         LocalDate today = LocalDate.now();
 
         List<Tour> tours = tourRepository.findAllToursWithPricingAndTransport();
+
         return tours.stream()
-                // Bước 1: Lọc tour có status = true (đã filter ở query, nhưng đảm bảo an toàn)
+                // 1. Lọc Tour và Departure hợp lệ
                 .filter(tour -> tour.getStatus() != null && tour.getStatus())
-                // Bước 2: FlatMap để lấy tất cả departures
                 .flatMap(tour -> tour.getDepartures() != null ? tour.getDepartures().stream() : java.util.stream.Stream.empty())
-                // Bước 3: Lọc departure có status = true
                 .filter(departure -> departure.getStatus() != null && departure.getStatus())
-                // Bước 4: Lọc departure có ngày khởi hành trong tương lai (từ OUTBOUND transport)
                 .filter(departure -> {
-                    if (departure.getTransports() == null) {
-                        return false;
-                    }
+                    if (departure.getTransports() == null) return false;
 
                     Optional<DepartureTransport> outboundTransportOpt = departure.getTransports().stream()
                             .filter(t -> t.getType() == TransportType.OUTBOUND)
@@ -592,20 +588,28 @@ public class TourServiceImpl implements TourService {
                     if (outboundTransportOpt.isEmpty() || outboundTransportOpt.get().getDepartTime() == null) {
                         return false;
                     }
-
-                    // Lấy ngày từ departTime của OUTBOUND transport
-                    LocalDate departDate = outboundTransportOpt.get().getDepartTime().toLocalDate();
-                    return departDate.isAfter(today);
+                    return outboundTransportOpt.get().getDepartTime().toLocalDate().isAfter(today);
                 })
-                // Bước 5: Map sang DiscountInfo để tính discount
+                // 2. Tính toán Discount cho từng Departure
                 .map(TourSpecialConvert.DiscountInfo::new)
-                // Bước 6: Lọc chỉ lấy những departure có discount > 0
                 .filter(info -> info.discountValue.compareTo(BigDecimal.ZERO) > 0)
-                // Bước 7: Sắp xếp theo discount giảm dần (giảm giá sâu nhất trước)
+
+                // Nếu trùng key (tourCode), hàm merge (v1, v2) sẽ giữ lại cái có discountValue lớn hơn.
+                .collect(Collectors.toMap(
+                        info -> info.departure.getTour().getTourCode(), // Key: TourCode
+                        info -> info,                                   // Value: DiscountInfo object
+                        (existing, replacement) ->                      // Merge Function: Chọn cái giảm giá sâu hơn
+                                existing.discountValue.compareTo(replacement.discountValue) >= 0 ? existing : replacement
+                ))
+                .values().stream() // Lấy danh sách các DiscountInfo duy nhất (đã lọc max discount)
+
+                // 4. Sắp xếp giảm dần theo giá trị giảm giá
                 .sorted(Comparator.comparing(info -> info.discountValue, Comparator.reverseOrder()))
-                // Bước 8: Chỉ lấy 10 tour departure đầu tiên
+
+                // 5. Lấy Top 10
                 .limit(10)
-                // Bước 9: Map sang DTO
+
+                // 6. Map sang DTO
                 .map(tourSpecialConvert::mapToTourSpecialResponseDTO)
                 .collect(Collectors.toList());
     }
