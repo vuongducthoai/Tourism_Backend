@@ -23,4 +23,6 @@ public interface TourDepartureRepository extends JpaRepository<TourDeparture, In
     @Query("UPDATE TourDeparture t SET t.availableSlots = t.availableSlots - :amount " +
             "WHERE t.departureID = :id AND t.availableSlots >= :amount")
     int decreaseAvailableSlots(@Param("id") Integer id, @Param("amount") Integer amount);
+
+    List<TourDeparture> findAllById(Iterable<Integer> ids);
 }
