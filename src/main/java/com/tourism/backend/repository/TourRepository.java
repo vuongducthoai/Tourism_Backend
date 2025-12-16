@@ -1,6 +1,7 @@
 package com.tourism.backend.repository;
 
 import com.tourism.backend.entity.Tour;
+import com.tourism.backend.entity.TourDeparture;
 import com.tourism.backend.repository.custom.TourRepositoryCustom;
 
 import org.springframework.data.domain.Pageable;
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,4 +48,5 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
                                 @Param("excludeTourId") Integer excludeTourId,
                                 Pageable pageable
                                 );
+
 }

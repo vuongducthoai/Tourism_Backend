@@ -4,6 +4,8 @@ package com.tourism.backend.service.impl;
 import com.tourism.backend.convert.BookingConverter;
 import com.tourism.backend.convert.ReviewConverter; // Import mới
 import com.tourism.backend.dto.requestDTO.ReviewRequestDTO;
+import com.tourism.backend.dto.response.ReviewResponse;
+import com.tourism.backend.dto.response.ReviewStatistics;
 import com.tourism.backend.dto.responseDTO.BookingResponseDTO;
 import com.tourism.backend.dto.responseDTO.ReviewResponseDTO; // Import mới
 import com.tourism.backend.entity.*;
@@ -12,6 +14,8 @@ import com.tourism.backend.repository.*;
 import com.tourism.backend.service.CloudinaryService;
 import com.tourism.backend.service.ReviewService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +24,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -117,6 +122,64 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new RuntimeException("Review not found for Booking ID: " + bookingId));
 
         return reviewConverter.toReviewResponseDTO(review);
+    }
+
+    @Override
+    public Page<ReviewResponse> getReviewsByTourCode(String tourCode, Pageable pageable) {
+        Page<Review> reviews = reviewRepository.findByTourCodeAndVisible(tourCode, pageable);
+        return reviews.map(this::mapToResponse);
+    }
+
+
+    @Override
+    public ReviewStatistics getReviewStatistics(String tourCode) {
+        Double avgRating = reviewRepository.getAverageRatingByTourCode(tourCode);
+        Integer totalReviews = reviewRepository.countByTourCode(tourCode);
+
+        Integer fiveStars = reviewRepository.countByTourCodeAndRating(tourCode, 5);
+        Integer fourStars = reviewRepository.countByTourCodeAndRating(tourCode, 4);
+        Integer threeStars = reviewRepository.countByTourCodeAndRating(tourCode, 3);
+        Integer twoStars = reviewRepository.countByTourCodeAndRating(tourCode, 2);
+        Integer oneStar = reviewRepository.countByTourCodeAndRating(tourCode, 1);
+
+        double total = totalReviews > 0 ? totalReviews : 1; // Tránh chia cho 0
+
+        return ReviewStatistics.builder()
+                .averageRating(avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 0.0)
+                .totalReviews(totalReviews)
+                .fiveStars(fiveStars)
+                .fourStars(fourStars)
+                .threeStars(threeStars)
+                .twoStars(twoStars)
+                .oneStar(oneStar)
+                .fiveStarsPercent(Math.round((fiveStars / total) * 1000.0) / 10.0)
+                .fourStarsPercent(Math.round((fourStars / total) * 1000.0) / 10.0)
+                .threeStarsPercent(Math.round((threeStars / total) * 1000.0) / 10.0)
+                .twoStarsPercent(Math.round((twoStars / total) * 1000.0) / 10.0)
+                .oneStarPercent(Math.round((oneStar / total) * 1000.0) / 10.0)
+                .build();
+    }
+
+    private ReviewResponse mapToResponse(Review review) {
+        return ReviewResponse.builder()
+                .reviewId(review.getReviewID())
+                .rating(review.getRating())
+                .comment(review.getComment())
+                .createdAt(review.getCreatedAt())
+                .user(ReviewResponse.UserInfo.builder()
+                        .userId(review.getUser().getUserID())
+                        .fullName(review.getUser().getFullName())
+                        .avatar(review.getUser().getAvatar())
+                        .email(review.getUser().getEmail())
+                        .build())
+                .images(review.getImages() != null
+                        ? review.getImages().stream()
+                        .map(img -> img.getImage()) // Lấy field 'image' từ ImageReview
+                        .collect(Collectors.toList())
+                        : null)
+                .tourCode(review.getTour().getTourCode())
+                .tourName(review.getTour().getTourName())
+                .build();
     }
 
     private int calculateCoinPoints(String comment, List<MultipartFile> images) {

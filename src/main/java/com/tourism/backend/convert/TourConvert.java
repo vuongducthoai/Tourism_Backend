@@ -5,14 +5,12 @@ import com.tourism.backend.dto.responseDTO.TourResponseDTO;
 import com.tourism.backend.entity.DeparturePricing;
 import com.tourism.backend.entity.DepartureTransport; // 👈 Import DepartureTransport
 import com.tourism.backend.entity.Tour;
-import com.tourism.backend.entity.TourDeparture;
 import com.tourism.backend.entity.TourImage;
 import com.tourism.backend.enums.PassengerType;
 import com.tourism.backend.enums.TransportType;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import com.tourism.backend.service.FavoriteTourService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -104,7 +102,7 @@ public class TourConvert {
                     // Bước 4: Chỉ lấy giá của ADULT
                     .filter(p -> p.getPassengerType() == PassengerType.ADULT)
                     // Bước 5: Lấy originalPrice
-                    .map(DeparturePricing::getOriginalPrice)
+                    .map(DeparturePricing::getSalePrice)
                     // Bước 6: Tìm giá thấp nhất
                     .min(BigDecimal::compareTo)
                     // Chuyển BigDecimal sang Long (hoặc 0L nếu không tìm thấy)
@@ -196,7 +194,7 @@ public class TourConvert {
                     // Bước 4: Chỉ lấy giá của ADULT
                     .filter(p -> p.getPassengerType() == PassengerType.ADULT)
                     // Bước 5: Lấy originalPrice
-                    .map(DeparturePricing::getOriginalPrice)
+                    .map(DeparturePricing::getSalePrice)
                     // Bước 6: Tìm giá thấp nhất
                     .min(BigDecimal::compareTo)
                     // Chuyển BigDecimal sang Long (hoặc 0L nếu không tìm thấy)

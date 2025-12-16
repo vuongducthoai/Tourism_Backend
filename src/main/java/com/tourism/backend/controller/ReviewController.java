@@ -2,9 +2,14 @@
 package com.tourism.backend.controller;
 
 import com.tourism.backend.dto.requestDTO.ReviewRequestDTO;
+import com.tourism.backend.dto.response.ReviewResponse;
+import com.tourism.backend.dto.response.ReviewStatistics;
 import com.tourism.backend.dto.responseDTO.ReviewResponseDTO; // Import DTO phản hồi mới
 import com.tourism.backend.service.ReviewService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -49,5 +54,22 @@ public class ReviewController {
         } catch (RuntimeException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
         }
+    }
+
+    @GetMapping("/tour/{tourCode}")
+    public ResponseEntity<Page<ReviewResponse>> getReviewsByTour(
+            @PathVariable String tourCode,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ReviewResponse> reviews = reviewService.getReviewsByTourCode(tourCode, pageable);
+        return ResponseEntity.ok(reviews);
+    }
+
+    @GetMapping("/tour/{tourCode}/statistics")
+    public ResponseEntity<ReviewStatistics> getReviewStatistics(@PathVariable String tourCode) {
+        ReviewStatistics stats = reviewService.getReviewStatistics(tourCode);
+        return ResponseEntity.ok(stats);
     }
 }

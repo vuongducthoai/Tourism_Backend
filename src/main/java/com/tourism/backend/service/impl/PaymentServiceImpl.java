@@ -238,7 +238,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         try {
             // 1. HARDCODE SỐ TIỀN TEST
-            int amount = 2000;
+            int amount = 4000;
 
             // 2. TẠO ORDER CODE NGẮN GỌN (Tránh quá dài gây lỗi ở một số bank)
             // Lấy 8 số cuối của timestamp để đảm bảo unique mà không quá dài

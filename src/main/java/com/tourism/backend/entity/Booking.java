@@ -34,7 +34,7 @@ public class Booking extends BaseEntity{
     @PrePersist
     public void generateBookingCode(){
         if(this.bookingCode == null){
-            this.bookingCode = "Bk-" + UUID.randomUUID().toString().substring(0, 8);
+            this.bookingCode = "BK" + UUID.randomUUID().toString().substring(0, 8);
         }
     }
 

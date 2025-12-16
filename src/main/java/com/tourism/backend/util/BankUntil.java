@@ -10,46 +10,46 @@ public class BankUntil {
 
         switch (code) {
             case "970436": case "VCB": case "VIETCOMBANK":
-                return "Ngân hàng Ngoại thương (Vietcombank)";
+                return "VIETCOMBANK";
 
             case "970415": case "ICB": case "VIETINBANK":
-                return "Ngân hàng Công thương (VietinBank)";
+                return "VIETINBANK";
 
             case "970418": case "BIDV": case "BID":
-                return "Ngân hàng Đầu tư và Phát triển (BIDV)";
+                return "BIDV";
 
             case "970405": case "VBA": case "AGRIBANK": case "VARB":
-                return "Ngân hàng Nông nghiệp (Agribank)";
+                return "AGRIBANK";
 
             case "970422": case "MB": case "MBBANK":
-                return "Ngân hàng Quân Đội (MB)";
+                return "MBBANK";
 
             case "970407": case "TCB": case "TECHCOMBANK":
-                return "Ngân hàng Kỹ thương (Techcombank)";
+                return "TECHCOMBANK";
 
             case "970416": case "ACB":
-                return "Ngân hàng Á Châu (ACB)";
+                return "ACB";
 
             case "970432": case "VPB": case "VPBANK":
-                return "Ngân hàng VPBank";
+                return "VPBANK";
 
             case "970423": case "TPB": case "TPBANK":
-                return "Ngân hàng TPBank";
+                return "TPBANK";
 
             case "970403": case "STB": case "SACOMBANK":
-                return "Ngân hàng Sacombank";
+                return "SACOMBANK";
 
             case "970437": case "HDB": case "HDBANK":
-                return "Ngân hàng HDBank";
+                return "HDBANK";
 
             case "970441": case "VIB":
-                return "Ngân hàng Quốc tế (VIB)";
+                return "VIB";
 
             case "970426": case "MSB": case "MARITIMEBANK":
-                return "Ngân hàng Hàng Hải (MSB)";
+                return "MARITIMEBANK";
 
             case "970448": case "OCB":
-                return "Ngân hàng Phương Đông (OCB)";
+                return "OCB";
 
             case "970443": case "SHB":
                 return "Ngân hàng Sài Gòn - Hà Nội (SHB)";

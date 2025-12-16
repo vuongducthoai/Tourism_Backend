@@ -21,9 +21,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -63,12 +60,17 @@ public class SecurityConfig {
                                 "/api/bookings/**",
                                 "/api/payment/check-status/**",
                                 "/api/payment/**",
-                               "/api/auth/profile",
+                                "/api/auth/profile",
                                 "/api/users/**",
                                 "/api/reviews/**",
                                 "/api/favorite-tours/**",
-                                "/ws/**"
-                          
+                                "/ws/**",
+                                "/api/notifications/**",
+                                "/api/admin/coupons/**",
+                                "/api/admin/locations/**",
+                                "/api/admin/policy-templates/**",
+                                "/api/admin/branches/**",
+                                "/api/admin/tours/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(

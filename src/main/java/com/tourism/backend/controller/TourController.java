@@ -5,9 +5,11 @@ import com.tourism.backend.dto.requestDTO.RegionRequestDTO;
 
 import com.tourism.backend.dto.requestDTO.SearchToursRequestDTO;
 
+import com.tourism.backend.dto.response.DepartureSimpleResponse;
 import com.tourism.backend.dto.response.TourCardResponseDTO;
 import com.tourism.backend.dto.response.TourDetailResponseDTO;
 
+import com.tourism.backend.dto.response.TourSimpleResponse;
 import com.tourism.backend.dto.responseDTO.DestinationResponseDTO;
 import com.tourism.backend.dto.responseDTO.ErrorResponseDTO;
 import com.tourism.backend.dto.responseDTO.TourResponseDTO;
@@ -15,6 +17,10 @@ import com.tourism.backend.dto.responseDTO.TourSpecialResponseDTO;
 import com.tourism.backend.entity.Tour;
 import com.tourism.backend.service.TourService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,10 +45,7 @@ public class TourController {
             return ResponseEntity.badRequest().body("Lỗi tạo tour: " + e.getMessage());
         }
     }
-
-
-
-
+    
     /**
      * API mới: Lấy tất cả các Tour theo định dạng TourReponsetory DTO.
      * HTTP GET /api/tours/display
@@ -119,6 +122,20 @@ public class TourController {
     @GetMapping("/related/{tourCode}")
     public ResponseEntity<List<TourCardResponseDTO>> getRelatedTours(@PathVariable String tourCode) {
         return ResponseEntity.ok(tourService.getRelatedTours(tourCode));
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<TourSimpleResponse>> getAllTours(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return ResponseEntity.ok(tourService.getAllToursSimple(pageable));
+    }
+
+    @GetMapping("/{id}/departures")
+    public ResponseEntity<List<DepartureSimpleResponse>> getTourDepartures(@PathVariable("id") Integer tourId) {
+        return ResponseEntity.ok(tourService.getDeparturesByTour(tourId));
     }
 
 }

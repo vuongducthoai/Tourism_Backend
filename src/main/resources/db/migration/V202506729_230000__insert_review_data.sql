@@ -1,0 +1,35 @@
+--INSERT INTO reviews (rating, comment, is_visible, booking_id, tour_id, user_id, created_at, updated_at)
+--VALUES
+---- Review 1
+--(5, 'Chuyến đi tuyệt vời, hướng dẫn viên rất nhiệt tình và am hiểu kiến thức lịch sử.', TRUE, 33, 1, 1, NOW(), NOW()),
+--
+---- Review 2
+--(4, 'Cảnh quan Hạ Long rất đẹp, đồ ăn trên du thuyền ngon. Tuy nhiên xe đưa đón hơi cũ một chút.', TRUE, 32, 1, 2, NOW(), NOW()),
+--
+---- Review 3
+--(5, 'Dịch vụ 5 sao đúng nghĩa. Khách sạn sạch sẽ, view biển rất đẹp. Sẽ quay lại lần sau.', TRUE, 31, 2, 1, NOW(), NOW()),
+--
+---- Review 4
+--(3, 'Tour ổn trong tầm giá. Lịch trình hơi dày nên đi lại hơi mệt cho người lớn tuổi, các bạn trẻ thì ok.', TRUE, 30, 2, 3, NOW(), NOW()),
+--
+---- Review 5
+--(5, 'Gia đình mình đã có một kỳ nghỉ đáng nhớ. Cảm ơn công ty đã hỗ trợ nhiệt tình khâu đặt vé.', TRUE, 29, 3, 2, NOW(), NOW());
+--
+--INSERT INTO review_images (image, review_id, created_at, updated_at)
+--VALUES
+---- Ảnh cho Review 1 (2 ảnh)
+--('https://res.cloudinary.com/dnt8vx1at/image/upload/v1763972312/HL1_uyf51t.jpg', 1, NOW(), NOW()),
+--('https://res.cloudinary.com/dnt8vx1at/image/upload/v1763972311/HL3_apcswv.jpg', 1, NOW(), NOW()),
+--
+---- Ảnh cho Review 2 (1 ảnh)
+--('https://res.cloudinary.com/dnt8vx1at/image/upload/v1763972311/HL4_y1jkyf.jpg', 2, NOW(), NOW()),
+--
+---- Ảnh cho Review 3 (3 ảnh)
+--('https://res.cloudinary.com/dnt8vx1at/image/upload/v1763972460/HUE03_ekntkc.webp', 3, NOW(), NOW()),
+--('https://res.cloudinary.com/dnt8vx1at/image/upload/v1763972552/PQ_edzdrg.webp', 3, NOW(), NOW()),
+--('https://res.cloudinary.com/dnt8vx1at/image/upload/v1763972551/PQ2_jx3yt9.webp', 3, NOW(), NOW()),
+--
+---- Review 4 không có ảnh -> bỏ qua
+--
+---- Ảnh cho Review 5 (1 ảnh)
+--('https://res.cloudinary.com/dnt8vx1at/image/upload/v1763972678/HG02_wfdl2f.webp', 5, NOW(), NOW());
