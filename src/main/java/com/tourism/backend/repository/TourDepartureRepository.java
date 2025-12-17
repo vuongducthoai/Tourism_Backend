@@ -1,6 +1,9 @@
 package com.tourism.backend.repository;
 
+import com.tourism.backend.entity.Tour;
 import com.tourism.backend.entity.TourDeparture;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,4 +37,40 @@ public interface TourDepartureRepository extends JpaRepository<TourDeparture, In
     @Query("UPDATE TourDeparture t SET t.coupon = NULL WHERE t.coupon.couponID = :couponId")
     void removeCouponFromDepartures(Integer couponId);
     List<TourDeparture> findAllById(Iterable<Integer> ids);
+
+    boolean existsByTourAndDepartureDate(Tour tour, LocalDate departureDate);
+
+    List<TourDeparture> findByTour(Tour tour);
+
+    List<TourDeparture> findByTourAndStatus(Tour tour, Boolean status);
+
+    @Query("SELECT d FROM TourDeparture d WHERE d.departureDate BETWEEN :startDate AND :endDate")
+    List<TourDeparture> findByDateRange(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT d FROM TourDeparture d " +
+            "WHERE (:tourId IS NULL OR d.tour.tourID = :tourId) " +
+            "AND (:startDate IS NULL OR d.departureDate >= :startDate) " +
+            "AND (:endDate IS NULL OR d.departureDate <= :endDate) " +
+            "AND (:status IS NULL OR d.status = :status)")
+    Page<TourDeparture> findWithFilters(
+            @Param("tourId") Integer tourId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("status") Boolean status,
+            Pageable pageable);
+
+    @Query("SELECT d FROM TourDeparture d " +
+            "WHERE d.tour.tourID = :tourId " +
+            "AND d.status = true " +
+            "AND d.departureDate >= :today " +
+            "ORDER BY d.departureDate ASC")
+    List<TourDeparture> findUpcomingDeparturesByTourId(
+            @Param("tourId") Integer tourId,
+            @Param("today") LocalDate today);
+
+    @Query("SELECT COUNT(d) FROM TourDeparture d " +
+            "WHERE d.tour.tourID = :tourId AND d.status = true")
+    Long countActiveDeparturesByTourId(@Param("tourId") Integer tourId);
 }

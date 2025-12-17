@@ -57,4 +57,7 @@ public class TourDeparture extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coupon_id")
     private Coupon coupon;
+
+    @OneToMany(mappedBy = "tourDeparture", fetch = FetchType.LAZY)
+    private List<Booking> bookings;
 }

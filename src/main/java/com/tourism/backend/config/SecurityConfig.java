@@ -70,10 +70,11 @@ public class SecurityConfig {
                                 "/api/admin/locations/**",
                                 "/api/admin/policy-templates/**",
                                 "/api/admin/branches/**",
-                                "/api/admin/tours/**"
+                                "/api/admin/tours/**",
                                 "/api/admin/dashboard/**",
                                 "/api/payment/**",
-                                "/api/chatbot/**"
+                                "/api/chatbot/**",
+                                "/api/admin/departures/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(
