@@ -5,4 +5,6 @@ public enum PassengerType {
     CHILD, // từ > 2-> 11
     INFANT, // <= 2
     SINGLE_SUPPLEMENT // tien phong don
+
+
 }

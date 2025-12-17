@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ public class TourManagementServiceImpl implements TourManagementService {
     private final TourImageRepository tourImageRepository;
     private final TourMediaRepository tourMediaRepository;
     private final ItineraryDayRepository itineraryDayRepository;
+    private final EntityManager entityManager; // FIX: Thêm EntityManager để flush
 
     @Override
     public TourDetailResponse createTour(CreateTourRequest request) {
@@ -58,6 +60,10 @@ public class TourManagementServiceImpl implements TourManagementService {
             log.info("Saved {} itinerary days for tour {}", request.getItineraryDays().size(), tour.getTourID());
         }
 
+        // FIX: Flush và refresh để đảm bảo data mới nhất
+        entityManager.flush();
+        entityManager.clear();
+
         tour = tourRepository.findById(tour.getTourID())
                 .orElseThrow(() -> new ResourceNotFoundException("Tour not found after creation"));
 
@@ -79,6 +85,7 @@ public class TourManagementServiceImpl implements TourManagementService {
 
         if (request.getImages() != null) {
             tourImageRepository.deleteByTour(tour);
+            entityManager.flush(); // FIX: Flush sau khi delete
             if (!request.getImages().isEmpty()) {
                 saveImages(tour, request.getImages());
             }
@@ -87,6 +94,7 @@ public class TourManagementServiceImpl implements TourManagementService {
 
         if (request.getMediaList() != null) {
             tourMediaRepository.deleteByTour(tour);
+            entityManager.flush(); // FIX: Flush sau khi delete
             if (!request.getMediaList().isEmpty()) {
                 saveMedia(tour, request.getMediaList());
             }
@@ -95,6 +103,7 @@ public class TourManagementServiceImpl implements TourManagementService {
 
         if (request.getItineraryDays() != null) {
             itineraryDayRepository.deleteByTour(tour);
+            entityManager.flush(); // FIX: Flush sau khi delete
             if (!request.getItineraryDays().isEmpty()) {
                 saveItinerary(tour, request.getItineraryDays());
             }
@@ -102,6 +111,8 @@ public class TourManagementServiceImpl implements TourManagementService {
         }
 
         tour = tourRepository.save(tour);
+        entityManager.flush();
+        entityManager.clear(); // FIX: Clear cache
 
         tour = tourRepository.findById(tourId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tour not found after update"));
@@ -178,12 +189,16 @@ public class TourManagementServiceImpl implements TourManagementService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tour với ID: " + tourId));
 
         tourImageRepository.deleteByTour(tour);
+        entityManager.flush(); // FIX: Flush ngay sau delete
         log.info("Deleted existing images for tour ID: {}", tourId);
 
         if (images != null && !images.isEmpty()) {
             saveImages(tour, images);
             log.info("Saved {} new images for tour ID: {}", images.size(), tourId);
         }
+
+        entityManager.flush();
+        entityManager.clear(); // FIX: Clear cache
 
         tour = tourRepository.findById(tourId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tour not found after image update"));
@@ -199,12 +214,16 @@ public class TourManagementServiceImpl implements TourManagementService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tour với ID: " + tourId));
 
         tourMediaRepository.deleteByTour(tour);
+        entityManager.flush(); // FIX: Flush ngay sau delete
         log.info("Deleted existing media for tour ID: {}", tourId);
 
         if (mediaList != null && !mediaList.isEmpty()) {
             saveMedia(tour, mediaList);
             log.info("Saved {} new media items for tour ID: {}", mediaList.size(), tourId);
         }
+
+        entityManager.flush();
+        entityManager.clear(); // FIX: Clear cache
 
         tour = tourRepository.findById(tourId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tour not found after media update"));
@@ -219,13 +238,30 @@ public class TourManagementServiceImpl implements TourManagementService {
         Tour tour = tourRepository.findById(tourId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tour với ID: " + tourId));
 
+        // FIX: Delete existing days và flush ngay lập tức
         itineraryDayRepository.deleteByTour(tour);
+        entityManager.flush(); // CRITICAL: Phải flush để xóa hết data cũ trước khi insert mới
         log.info("Deleted existing itinerary days for tour ID: {}", tourId);
 
         if (itineraryDays != null && !itineraryDays.isEmpty()) {
-            saveItinerary(tour, itineraryDays);
-            log.info("Saved {} new itinerary days for tour ID: {}", itineraryDays.size(), tourId);
+            // FIX: Validate và normalize dayNumber
+            List<ItineraryDayRequest> normalizedDays = new ArrayList<>();
+            for (int i = 0; i < itineraryDays.size(); i++) {
+                ItineraryDayRequest day = itineraryDays.get(i);
+                ItineraryDayRequest normalized = new ItineraryDayRequest();
+                normalized.setDayNumber(i + 1); // Đảm bảo dayNumber liên tục
+                normalized.setTitle(day.getTitle());
+                normalized.setMeals(day.getMeals());
+                normalized.setDetails(day.getDetails());
+                normalizedDays.add(normalized);
+            }
+
+            saveItinerary(tour, normalizedDays);
+            log.info("Saved {} new itinerary days for tour ID: {}", normalizedDays.size(), tourId);
         }
+
+        entityManager.flush();
+        entityManager.clear(); // FIX: Clear cache để reload data mới
 
         tour = tourRepository.findById(tourId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tour not found after itinerary update"));
@@ -390,7 +426,7 @@ public class TourManagementServiceImpl implements TourManagementService {
     private void saveItinerary(Tour tour, List<ItineraryDayRequest> itineraryRequests) {
         List<ItineraryDay> itineraryDays = new ArrayList<>();
 
-        // Sort by day number to ensure correct order
+        // FIX: Sort và validate dayNumber
         itineraryRequests.sort((a, b) -> a.getDayNumber().compareTo(b.getDayNumber()));
 
         for (ItineraryDayRequest req : itineraryRequests) {
@@ -472,6 +508,7 @@ public class TourManagementServiceImpl implements TourManagementService {
             return new ArrayList<>();
         }
 
+        // FIX: Đảm bảo sort theo dayNumber
         return itineraryDays.stream()
                 .sorted((a, b) -> a.getDayNumber().compareTo(b.getDayNumber()))
                 .map(day -> ItineraryDayResponse.builder()

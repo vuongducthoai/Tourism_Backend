@@ -25,4 +25,8 @@ public interface PolicyTemplateRepository extends JpaRepository<PolicyTemplate, 
     Page<PolicyTemplate> searchPolicies(@Param("keyword") String keyword, Pageable pageable);
 
     long countByContact_ContactID(Integer contactId);
+
+    List<PolicyTemplate> findByStatusTrue();
+
+    PolicyTemplate findByTemplateName(String templateName);
 }

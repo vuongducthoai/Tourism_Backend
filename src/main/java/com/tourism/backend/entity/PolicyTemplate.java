@@ -59,4 +59,7 @@ public class PolicyTemplate extends BaseEntity{
 
     @OneToMany(mappedBy = "policyTemplate")
     private List<TourDeparture> tourDepartures;
+
+    @Column(name = "status")
+    private Boolean status = true;
 }

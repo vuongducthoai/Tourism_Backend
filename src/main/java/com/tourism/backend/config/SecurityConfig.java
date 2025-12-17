@@ -73,7 +73,8 @@ public class SecurityConfig {
                                 "/api/admin/tours/**",
                                 "/api/admin/dashboard/**",
                                 "/api/payment/**",
-                                "/api/chatbot/**"
+                                "/api/chatbot/**",
+                                "/api/admin/departures/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(

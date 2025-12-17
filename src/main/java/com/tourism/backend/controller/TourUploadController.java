@@ -34,6 +34,7 @@ public class TourUploadController {
             @RequestParam("description") String description) {
 
         var response = tourMediaService.uploadVideo(tourId, file, title, description);
+        System.out.println("Title" + title);
         return ResponseEntity.ok(Map.of("success", true, "data", response));
     }
 }

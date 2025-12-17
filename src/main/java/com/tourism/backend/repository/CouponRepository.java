@@ -169,5 +169,4 @@ public interface CouponRepository extends JpaRepository<Coupon, Integer> {
            c.createdAt DESC
        """)
         Page<Coupon> findAllSorted(Pageable pageable);
-
 }
