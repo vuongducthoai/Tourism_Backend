@@ -356,9 +356,12 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingResponseDTO> getAllBookingsByUser(Integer userID, BookingStatus bookingStatus) {
         List<Booking> bookings = bookingRepository.findByUserIDWithDetails(userID, bookingStatus);
         return bookings.stream()
+                .sorted(Comparator.comparing(Booking::getBookingDate).reversed())
                 .map(bookingConverter::convertToBookingResponseDTO)
                 .collect(Collectors.toList());
     }
+
+
 
     @Override
     public BookingResponseDTO cancelBooking(BookingCancellationRequestDTO requestDTO) {
