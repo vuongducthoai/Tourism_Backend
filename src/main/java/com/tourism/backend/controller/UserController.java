@@ -53,6 +53,7 @@ public class UserController {
             @ModelAttribute UserUpdateRequestDTO updateDTO
     ) {
         try {
+            System.out.println(updateDTO.getPhone());
             // Service sẽ ném IOException nếu upload Cloudinary thất bại
             UserReaponseDTO updatedUser = userService.updateUser(userID, updateDTO);
             return ResponseEntity.ok(updatedUser);
