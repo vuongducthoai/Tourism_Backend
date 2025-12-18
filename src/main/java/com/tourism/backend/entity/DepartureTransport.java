@@ -2,7 +2,7 @@ package com.tourism.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tourism.backend.enums.TransportType;
-import com.tourism.backend.enums.VehicleTyle;
+import com.tourism.backend.enums.VehicleType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,7 +28,7 @@ public class DepartureTransport extends BaseEntity{
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "vehicle_type")
-    private VehicleTyle vehicleTyle;
+    private VehicleType vehicleTyle;
 
     @Column(name = "transport_code")
     private String transportCode;
