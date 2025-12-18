@@ -1,6 +1,6 @@
 package com.tourism.backend.dto.request;
 import com.tourism.backend.enums.TransportType;
-import com.tourism.backend.enums.VehicleTyle;
+import com.tourism.backend.enums.VehicleType;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -16,7 +16,7 @@ public class DepartureTransportRequest {
 
     private String transportCode;
 
-    private VehicleTyle vehicleType;
+    private VehicleType vehicleType;
 
     private String vehicleName;
 

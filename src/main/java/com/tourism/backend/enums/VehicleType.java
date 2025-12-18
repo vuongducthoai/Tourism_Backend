@@ -1,6 +1,6 @@
 package com.tourism.backend.enums;
 
-public enum VehicleTyle {
+public enum VehicleType {
     PLANE("Máy bay"),
     BUS("Xe khách"),
     TRAIN("Tàu hỏa"),
@@ -9,7 +9,7 @@ public enum VehicleTyle {
 
     private final String displayName;
 
-    VehicleTyle(String displayName) {
+    VehicleType(String displayName) {
         this.displayName = displayName;
     }
 
