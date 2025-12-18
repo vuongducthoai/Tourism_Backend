@@ -1,7 +1,7 @@
 package com.tourism.backend.enums;
 
 public enum VehicleTyle {
-    FLIGHT("Máy bay"),
+    PLANE("Máy bay"),
     BUS("Xe khách"),
     TRAIN("Tàu hỏa"),
     SHIP("Tàu thủy"),
