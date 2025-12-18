@@ -28,7 +28,6 @@ public class User extends BaseEntity{
     @Size(max = 100)
     private String fullName;
 
-//    @NotBlank(message = "Phone number is required")
     @Pattern(regexp = "^\\d{10,11}$", message = "Phone number must be 10-11 digits")
     private String phone;
 
@@ -43,7 +42,7 @@ public class User extends BaseEntity{
     @NotBlank(message = "Password is required")
     private String password;
 
-    @Column(name = "avatar", nullable = false)
+    @Column(name = "avatar")
     private String avatar;
 
     private Boolean status = true;
@@ -51,7 +50,7 @@ public class User extends BaseEntity{
     @Past(message = "Date of birth must be in the past")
     private LocalDate dateOfBirth;
 
-    @Column(name = "coin_balance", nullable = false)
+    @Column(name = "coin_balance")
     @Min(value = 0, message = "Coin balance cannot be negative")
     private BigDecimal coinBalance = BigDecimal.ZERO;
 
