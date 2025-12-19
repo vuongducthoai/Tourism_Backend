@@ -237,7 +237,7 @@ public class DashboardServiceImpl implements DashboardService {
         Long totalTours = tourRepository.count();
         Long activeTours = tourRepository.countByStatus(true);
         Long totalDepartures = tourRepository.countAllDepartures();
-        Long upcomingDepartures = tourRepository.countUpcomingDepartures(LocalDate.now());
+        Long upcomingDepartures = tourRepository.countUpcomingDepartures(LocalDateTime.now());
 
         List<DashboardStatsDTO.HotTour> hotTours = getHotTours(5);
         List<DashboardStatsDTO.TourNeedingAttention> toursNeedingAttention = getToursNeedingAttention();

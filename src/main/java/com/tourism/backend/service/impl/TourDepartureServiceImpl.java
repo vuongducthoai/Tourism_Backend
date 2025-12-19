@@ -9,6 +9,7 @@ import com.tourism.backend.dto.response.DeparturePricingResponse;
 import com.tourism.backend.dto.response.DepartureSummaryResponse;
 import com.tourism.backend.dto.response.DepartureTransportResponse;
 import com.tourism.backend.entity.*;
+import com.tourism.backend.enums.PassengerType;
 import com.tourism.backend.enums.TransportType;
 import com.tourism.backend.exception.DuplicateResourceException;
 import com.tourism.backend.exception.ResourceNotFoundException;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -199,7 +201,7 @@ public class TourDepartureServiceImpl implements TourDepartureService {
     }
 
     @Override
-    public Page<DepartureSummaryResponse> getAllDepartures(Integer tourId, LocalDate startDate, LocalDate endDate, Boolean status, Pageable pageable) {
+    public Page<DepartureSummaryResponse> getAllDepartures(Integer tourId, LocalDateTime startDate, LocalDateTime endDate, Boolean status, Pageable pageable) {
         log.info("Fetching departures with filters - tourId: {}, startDate: {}, endDate: {}, status: {}",
                 tourId, startDate, endDate, status);
 
@@ -297,8 +299,10 @@ public class TourDepartureServiceImpl implements TourDepartureService {
     }
 
     @Override
-    public DepartureDetailResponse cloneDeparture(Integer departureId, LocalDate newDepartureDate) {
+    public DepartureDetailResponse cloneDeparture(Integer departureId, LocalDateTime newDepartureDate) {
         log.info("Cloning departure ID: {} to new date: {}", departureId, newDepartureDate);
+
+
 
         TourDeparture originalDeparture = departureRepository.findById(departureId)
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -339,12 +343,12 @@ public class TourDepartureServiceImpl implements TourDepartureService {
             DepartureTransport newTransport = new DepartureTransport();
             newTransport.setTourDeparture(newDeparture);
             newTransport.setType(originalTransport.getType());
+            newTransport.setVehicleTyle(originalTransport.getVehicleTyle());
             newTransport.setTransportCode(originalTransport.getTransportCode());
             newTransport.setVehicleName(originalTransport.getVehicleName());
             newTransport.setStartPoint(originalTransport.getStartPoint());
             newTransport.setEndPoint(originalTransport.getEndPoint());
-            newTransport.setDepartTime(originalTransport.getDepartTime());
-            newTransport.setArrivalTime(originalTransport.getArrivalTime());
+            newTransport.setDepartTime(newDepartureDate);
             transportRepository.save(newTransport);
         }
 
@@ -443,6 +447,7 @@ public class TourDepartureServiceImpl implements TourDepartureService {
 
         // Get lowest price
         BigDecimal lowestPrice = departure.getPricings().stream()
+                .filter(p -> p.getPassengerType() == PassengerType.ADULT)
                 .map(DeparturePricing::getSalePrice)
                 .min(BigDecimal::compareTo)
                 .orElse(BigDecimal.ZERO);

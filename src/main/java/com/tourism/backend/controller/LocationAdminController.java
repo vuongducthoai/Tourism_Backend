@@ -47,6 +47,26 @@ public class LocationAdminController {
         return ResponseEntity.ok(locations);
     }
 
+    @GetMapping("/national")
+    public ResponseEntity<Page<LocationResponse>> getAirportNational(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "locationID") String sortBy,
+            @RequestParam(defaultValue = "DESC") String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("ASC")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<LocationResponse> locations = locationService.getAirportNational(
+                pageable
+        );
+
+        return ResponseEntity.ok(locations);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<LocationResponse> getLocationById(
             @PathVariable Integer id

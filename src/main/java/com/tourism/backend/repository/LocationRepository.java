@@ -64,6 +64,14 @@ public interface LocationRepository extends JpaRepository<Location, Integer> {
             Pageable pageable
     );
 
+
+    @Query("""
+    SELECT l FROM Location l 
+    WHERE l.airportCode IS NOT NULL 
+    AND l.airportCode <> ''
+    """)
+    Page<Location> getAllAirportNational(Pageable pageable);
+
     @Query("SELECT COUNT(t) FROM Tour t WHERE t.startLocation.locationID = :locationId")
     Long countToursAsStartPoint(@Param("locationId") Integer locationId);
 

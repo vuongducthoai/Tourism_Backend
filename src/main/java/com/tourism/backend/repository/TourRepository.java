@@ -15,6 +15,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,7 +59,7 @@ public interface TourRepository extends JpaRepository<Tour, Integer>, TourReposi
     Long countAllDepartures();
 
     @Query("SELECT COUNT(td) FROM TourDeparture td WHERE td.departureDate > :date")
-    Long countUpcomingDepartures(@Param("date") LocalDate date);
+    Long countUpcomingDepartures(@Param("date") LocalDateTime date);
 
     @Query("SELECT new com.tourism.backend.dto.responseDTO.DashboardStatsDTO$HotTour(" +
             "t.tourID, t.tourCode, t.tourName, COUNT(b.bookingID), SUM(b.totalPrice), " +

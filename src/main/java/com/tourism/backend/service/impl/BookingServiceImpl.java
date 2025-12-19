@@ -23,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -110,7 +112,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public BookingDetailResponseDTO createBooking(BookingRequestDTO request) {
+    public BookingDetailResponseDTO createBooking(BookingRequestDTO request, String authenticatedEmail) {
         TourDeparture departure = departureRepository.findById(request.getDepartureId())
                 .orElseThrow(() -> new RuntimeException("Departure not found!"));
 
@@ -131,6 +133,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = new Booking();
         List<BookingPassenger> passengerEntities = new ArrayList<>();
 
+        // Process passengers
         for (BookingRequestDTO.PassengerRequest pReq : request.getPassengers()) {
             BigDecimal ticketPrice = findPriceByType(pricings, pReq.getType());
 
@@ -156,6 +159,7 @@ public class BookingServiceImpl implements BookingService {
 
         BigDecimal totalBeforeDiscount = subTotal.add(subSurcharge);
 
+        // ===== XỬ LÝ COUPON =====
         BigDecimal couponDiscount = BigDecimal.ZERO;
         List<Coupon> appliedCoupons = new ArrayList<>();
 
@@ -174,32 +178,49 @@ public class BookingServiceImpl implements BookingService {
                 }
 
                 couponDiscount = couponDiscount.add(BigDecimal.valueOf(coupon.getDiscountAmount()));
-
-                // Tăng lượt dùng
                 coupon.setUsageCount(coupon.getUsageCount() + 1);
                 couponRepository.save(coupon);
-
                 appliedCoupons.add(coupon);
+            }
+        }
+
+        // ===== TÌM USER (NẾU ĐÃ ĐĂNG NHẬP) =====
+        User user = null;
+        if (authenticatedEmail != null) {
+            user = userRepository.findByEmail(authenticatedEmail).orElse(null);
+
+            if (user != null) {
+                System.out.println("Found user: " + user.getEmail() + " (ID: " + user.getUserID() + ")");
+            } else {
+                System.out.println("User not found with email: " + authenticatedEmail);
             }
         }
 
         BigDecimal pointDiscount = BigDecimal.ZERO;
 
-        if (request.getPointsUsed() != null && request.getPointsUsed() > 0) {
-            User user = userRepository.findByEmail(request.getContactEmail())
-                    .orElseThrow(() -> new RuntimeException("This email is not a registered member, reward points cannot be used!"));
+        if (user != null && request.getPointsUsed() != null && request.getPointsUsed() > 0) {
+            if (!request.getContactEmail().equalsIgnoreCase(authenticatedEmail)) {
+                throw new RuntimeException(
+                        "⚠️ Email liên lạc (" + request.getContactEmail() + ") " +
+                                "phải trùng với email tài khoản (" + authenticatedEmail + ") " +
+                                "để sử dụng điểm thưởng!"
+                );
+            }
 
             BigDecimal pointsToRedeem = BigDecimal.valueOf(request.getPointsUsed());
 
             if (user.getCoinBalance().compareTo(pointsToRedeem) < 0) {
-                throw new RuntimeException("Insufficient points balance! You just have " + user.getCoinBalance() + " point.");
+                throw new RuntimeException(
+                        "Insufficient points balance! You just have " +
+                                user.getCoinBalance() + " point."
+                );
             }
 
             pointDiscount = pointsToRedeem.multiply(BigDecimal.valueOf(1000));
-
             user.setCoinBalance(user.getCoinBalance().subtract(pointsToRedeem));
-            userRepository.save(user);
-            booking.setUser(user);
+
+            System.out.println("Points used: " + request.getPointsUsed() +
+                    " → Discount: " + pointDiscount);
         }
 
         BigDecimal finalTotal = totalBeforeDiscount.subtract(couponDiscount).subtract(pointDiscount);
@@ -223,14 +244,20 @@ public class BookingServiceImpl implements BookingService {
         booking.setPaidByCoin(pointDiscount);
         booking.setTotalPrice(finalTotal);
 
-        if (!request.getCouponCode().isEmpty()) {
-            booking.setAppliedCouponCodes(
-                    String.join(",", request.getCouponCode())
-            );
+        if (request.getCouponCode() != null && !request.getCouponCode().isEmpty()) {
+            booking.setAppliedCouponCodes(String.join(",", request.getCouponCode()));
         }
 
         booking.setTourDeparture(departure);
         booking.setPassengers(passengerEntities);
+
+        if (user != null) {
+            booking.setUser(user);
+            userRepository.save(user);
+            System.out.println("Booking linked to user: " + user.getEmail());
+        } else {
+            System.out.println("Booking created as guest (no user)");
+        }
 
         bookingRepository.save(booking);
 
@@ -248,7 +275,6 @@ public class BookingServiceImpl implements BookingService {
         Tour tour = booking.getTourDeparture().getTour();
         TourDeparture departure = booking.getTourDeparture();
 
-        // Map hành khách
         List<BookingDetailResponseDTO.PassengerDTO> passengerDTOs = booking.getPassengers().stream()
                 .map(p -> BookingDetailResponseDTO.PassengerDTO.builder()
                         .fullName(p.getFullName())

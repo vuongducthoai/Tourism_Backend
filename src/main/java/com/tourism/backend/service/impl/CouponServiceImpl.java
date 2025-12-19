@@ -329,7 +329,7 @@ public class CouponServiceImpl implements CouponService {
                             .tourId(dep.getTour().getTourID())
                             .tourCode(dep.getTour().getTourCode())
                             .tourName(dep.getTour().getTourName())
-                            .departureDate(dep.getDepartureDate().atStartOfDay())
+                            .departureDate(dep.getDepartureDate())
                             .build())
                     .collect(Collectors.toList());
 

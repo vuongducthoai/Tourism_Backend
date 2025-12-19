@@ -169,7 +169,7 @@ public class TourServiceImpl implements TourService {
             System.out.println("=== Processing Departure ID: " + dep.getDepartureID() + " ===");
 
             // Validate transports
-            if (dep.getTransports() == null || dep.getTransports().isEmpty()) {
+            if (dep.getTransports() == null || dep.getTransports().isEmpty() || !dep.getStatus()) {
                 System.out.println("⚠ Skipped: No transports");
                 continue;
             }
@@ -521,7 +521,7 @@ public class TourServiceImpl implements TourService {
                 PageRequest.of(0, 3)
         );
         List<TourCardResponseDTO> response = new ArrayList<>();
-        LocalDate today = LocalDate.now();
+        LocalDateTime today = LocalDate.now().atStartOfDay();
 
         for(Tour t : relatedTours){
             String thumbnail = t.getImages().stream()

@@ -10,11 +10,15 @@ import com.tourism.backend.dto.response.TourBookingInfoDTO;
 import com.tourism.backend.dto.responseDTO.BookingResponseDTO;
 import com.tourism.backend.dto.responseDTO.ErrorResponseDTO;
 import com.tourism.backend.enums.BookingStatus;
+import com.tourism.backend.security.UserPrincipal;
 import com.tourism.backend.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import org.springframework.data.domain.Page; // Import Page
@@ -37,9 +41,31 @@ public class BookingController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<BookingDetailResponseDTO> createBooking(@RequestBody BookingRequestDTO request) {
-        BookingDetailResponseDTO response = bookingService.createBooking(request);
-        System.out.println(response.getBookingCode());
+    public ResponseEntity<BookingDetailResponseDTO> createBooking(@RequestBody BookingRequestDTO request, Authentication authentication) {
+        String authenticatedEmail = null;
+        if (authentication != null && authentication.isAuthenticated()) {
+            Object principal = authentication.getPrincipal();
+
+            if (principal instanceof String) {
+                authenticatedEmail = (String) principal;
+            }
+            else if (principal instanceof UserPrincipal) {
+                authenticatedEmail = ((UserPrincipal) principal).getEmail();
+            }
+            else {
+                authenticatedEmail = authentication.getName();
+            }
+        }
+
+        System.out.println("📧 Authenticated email: " + authenticatedEmail);
+        System.out.println("📧 Contact email: " + request.getContactEmail());
+        System.out.println("🎯 Points used: " + request.getPointsUsed());
+
+        BookingDetailResponseDTO response = bookingService.createBooking(
+                request,
+                authenticatedEmail
+        );
+
         return ResponseEntity.ok(response);
     }
 

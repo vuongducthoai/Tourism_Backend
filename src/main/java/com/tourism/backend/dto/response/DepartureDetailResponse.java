@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 public class DepartureDetailResponse {
     private Integer departureID;
-    private LocalDate departureDate;
+    private LocalDateTime departureDate;
     private Boolean status;
     private Integer availableSlots;
     private String tourGuideInfo;
