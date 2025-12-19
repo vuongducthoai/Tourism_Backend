@@ -2,6 +2,7 @@ package com.tourism.backend.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tourism.backend.entity.User;
+import com.tourism.backend.enums.Role;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 public class UserResponseDTO {
     private Integer id;
     private String email;
+    private Role role;
     private String fullName;
     private String phoneNumber;
     private String avatar;
@@ -22,6 +24,7 @@ public class UserResponseDTO {
         this.id = user.getUserID();
         this.email = user.getEmail();
         this.fullName = user.getFullName();
+        this.role = user.getRole();
         this.phoneNumber = user.getPhone();
         this.dateOfBirth = user.getDateOfBirth();
         this.avatar = user.getAvatar();

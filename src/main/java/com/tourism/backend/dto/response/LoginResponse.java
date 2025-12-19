@@ -1,8 +1,5 @@
 package com.tourism.backend.dto.response;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.math.BigDecimal;
 
@@ -21,6 +18,8 @@ public class LoginResponse {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Getter
+    @Setter
     public static class UserInfo {
         private Integer userId;
         private String fullName;

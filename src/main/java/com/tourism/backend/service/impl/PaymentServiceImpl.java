@@ -421,7 +421,7 @@ public class PaymentServiceImpl implements PaymentService {
                 payment.setPaymentDescription(description);
                 log.info("Payment Description: {}", description);
 
-                booking.setBookingStatus(BookingStatus.PAID);
+                booking.setBookingStatus(BookingStatus.PENDING_CONFIRMATION);
 
                 // Update available slots
                 int currentSlots = booking.getTourDeparture().getAvailableSlots();
