@@ -593,54 +593,63 @@ public class TourServiceImpl implements TourService {
                 .collect(Collectors.toList());
     }
 
+
     @Override
     @Transactional(readOnly = true)
     public List<TourSpecialResponseDTO> getTop10DeepestDiscountTours() {
         LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now(); // ✅ Thêm biến now
 
         List<Tour> tours = tourRepository.findAllToursWithPricingAndTransport();
 
         return tours.stream()
                 // 1. Lọc Tour và Departure hợp lệ
                 .filter(tour -> tour.getStatus() != null && tour.getStatus())
-                .flatMap(tour -> tour.getDepartures() != null ? tour.getDepartures().stream() : java.util.stream.Stream.empty())
+                .flatMap(tour -> tour.getDepartures() != null ?
+                        tour.getDepartures().stream() :
+                        java.util.stream.Stream.empty())
                 .filter(departure -> departure.getStatus() != null && departure.getStatus())
                 .filter(departure -> {
                     if (departure.getTransports() == null) return false;
 
                     Optional<DepartureTransport> outboundTransportOpt = departure.getTransports().stream()
                             .filter(t -> t.getType() == TransportType.OUTBOUND)
-                            .min((t1, t2) -> t1.getDepartTime().compareTo(t2.getDepartTime()));
+                            .min(Comparator.comparing(DepartureTransport::getDepartTime));
 
                     if (outboundTransportOpt.isEmpty() || outboundTransportOpt.get().getDepartTime() == null) {
                         return false;
                     }
                     return outboundTransportOpt.get().getDepartTime().toLocalDate().isAfter(today);
                 })
-                // 2. Tính toán Discount cho từng Departure
-                .map(TourSpecialConvert.DiscountInfo::new)
-                .filter(info -> info.discountValue.compareTo(BigDecimal.ZERO) > 0)
+                // 2. Tính toán Discount cho từng Departure (✅ Truyền thêm tham số now)
+                .map(departure -> new TourSpecialConvert.DiscountInfo(departure, now))
 
-                // Nếu trùng key (tourCode), hàm merge (v1, v2) sẽ giữ lại cái có discountValue lớn hơn.
+                // 3. Lọc chỉ lấy tour có discountAmount > 0
+                .filter(info -> info.discountAmount != null && info.discountAmount > 0)
+
+                // 4. Loại bỏ trùng lặp tourCode, giữ lại departure có discountAmount lớn nhất
                 .collect(Collectors.toMap(
-                        info -> info.departure.getTour().getTourCode(), // Key: TourCode
-                        info -> info,                                   // Value: DiscountInfo object
-                        (existing, replacement) ->                      // Merge Function: Chọn cái giảm giá sâu hơn
-                                existing.discountValue.compareTo(replacement.discountValue) >= 0 ? existing : replacement
+                        info -> info.departure.getTour().getTourCode(),
+                        info -> info,
+                        (existing, replacement) ->
+                                existing.discountAmount >= replacement.discountAmount ?
+                                        existing : replacement
                 ))
-                .values().stream() // Lấy danh sách các DiscountInfo duy nhất (đã lọc max discount)
+                .values().stream()
 
-                // 4. Sắp xếp giảm dần theo giá trị giảm giá
-                .sorted(Comparator.comparing(info -> info.discountValue, Comparator.reverseOrder()))
+                // 5. SẮP XẾP GIẢM DẦN THEO discountAmount
+                .sorted(Comparator.comparing(
+                        (TourSpecialConvert.DiscountInfo info) -> info.discountAmount,
+                        Comparator.reverseOrder()
+                ))
 
-                // 5. Lấy Top 10
+                // 6. Lấy Top 10
                 .limit(10)
 
-                // 6. Map sang DTO
+                // 7. Map sang DTO
                 .map(tourSpecialConvert::mapToTourSpecialResponseDTO)
                 .collect(Collectors.toList());
     }
-
     @Override
     public List<TourResponseDTO> searchTours(SearchToursRequestDTO dto,Integer userId) {
         List<Tour> tours = tourRepository.searchToursDynamically(dto);
