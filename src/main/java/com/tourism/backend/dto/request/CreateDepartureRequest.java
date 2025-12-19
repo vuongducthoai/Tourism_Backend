@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -19,7 +20,7 @@ public class CreateDepartureRequest {
 
     @NotNull(message = "Ngày khởi hành không được để trống")
     @Future(message = "Ngày khởi hành phải là ngày trong tương lai")
-    private LocalDate departureDate;
+    private LocalDateTime departureDate;
 
     @NotNull(message = "Số chỗ trống không được để trống")
     @Min(value = 1, message = "Số chỗ trống phải >= 1")

@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -26,7 +27,7 @@ public class TourDeparture extends BaseEntity{
     @Column(name = "departure_date", nullable = false)
     @NotNull(message = "Departure date is required")
     @Future(message = "Departure date must be in the future")
-    private LocalDate departureDate;
+    private LocalDateTime departureDate;
 
     @Column(name = "status")
     private Boolean status = true;

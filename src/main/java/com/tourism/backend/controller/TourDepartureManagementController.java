@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,8 +74,8 @@ public class TourDepartureManagementController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllDepartures(
             @RequestParam(required = false) Integer tourId,
-            @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false) LocalDateTime startDate,
+            @RequestParam(required = false) LocalDateTime endDate,
             @RequestParam(required = false) Boolean status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -164,7 +165,7 @@ public class TourDepartureManagementController {
     @PostMapping("/{departureId}/clone")
     public ResponseEntity<Map<String, Object>> cloneDeparture(
             @PathVariable Integer departureId,
-            @RequestParam LocalDate newDepartureDate) {
+            @RequestParam LocalDateTime newDepartureDate) {
 
         DepartureDetailResponse response =
                 departureService.cloneDeparture(departureId, newDepartureDate);

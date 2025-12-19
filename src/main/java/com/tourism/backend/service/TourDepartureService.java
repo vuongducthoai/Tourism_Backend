@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface TourDepartureService {
@@ -21,8 +22,8 @@ public interface TourDepartureService {
 
     Page<DepartureSummaryResponse> getAllDepartures(
             Integer tourId,
-            LocalDate startDate,
-            LocalDate endDate,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
             Boolean status,
             Pageable pageable);
 
@@ -34,5 +35,5 @@ public interface TourDepartureService {
 
     DepartureDetailResponse updateTransport(Integer departureId, String direction, DepartureTransportRequest transport);
 
-    DepartureDetailResponse cloneDeparture(Integer departureId, LocalDate newDepartureDate);
+    DepartureDetailResponse cloneDeparture(Integer departureId, LocalDateTime newDepartureDate);
 }

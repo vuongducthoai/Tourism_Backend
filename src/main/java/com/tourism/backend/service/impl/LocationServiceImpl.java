@@ -75,6 +75,12 @@ public class LocationServiceImpl implements LocationService {
     }
 
     @Override
+    public Page<LocationResponse> getAirportNational(Pageable pageable) {
+        Page<Location> locations = locationRepository.getAllAirportNational(pageable);
+        return locations.map(this::mapToResponse);
+    }
+
+    @Override
     public LocationResponse getLocationById(Integer id) {
         Location location = findLocationById(id);
         return mapToResponse(location);
@@ -213,6 +219,8 @@ public class LocationServiceImpl implements LocationService {
         log.info("Uploaded image for location ID: {}", id);
         return imageUrl;
     }
+
+
 
     private Location findLocationById(Integer id) {
         return locationRepository.findById(id)

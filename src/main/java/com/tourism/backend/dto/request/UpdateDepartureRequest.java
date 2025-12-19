@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -14,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 public class UpdateDepartureRequest {
     @Future(message = "Ngày khởi hành phải là ngày trong tương lai")
-    private LocalDate departureDate;
+    private LocalDateTime departureDate;
 
     @Min(value = 1, message = "Số chỗ trống phải >= 1")
     private Integer availableSlots;

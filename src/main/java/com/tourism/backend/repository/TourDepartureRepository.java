@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -38,7 +39,7 @@ public interface TourDepartureRepository extends JpaRepository<TourDeparture, In
     void removeCouponFromDepartures(Integer couponId);
     List<TourDeparture> findAllById(Iterable<Integer> ids);
 
-    boolean existsByTourAndDepartureDate(Tour tour, LocalDate departureDate);
+    boolean existsByTourAndDepartureDate(Tour tour, LocalDateTime departureDate);
 
     List<TourDeparture> findByTour(Tour tour);
 
@@ -51,13 +52,13 @@ public interface TourDepartureRepository extends JpaRepository<TourDeparture, In
 
     @Query("SELECT d FROM TourDeparture d " +
             "WHERE (:tourId IS NULL OR d.tour.tourID = :tourId) " +
-            "AND (:startDate IS NULL OR d.departureDate >= :startDate) " +
-            "AND (:endDate IS NULL OR d.departureDate <= :endDate) " +
+            "AND (CAST(:startDate AS timestamp) IS NULL OR d.departureDate >= :startDate) " +
+            "AND (CAST(:endDate AS timestamp) IS NULL OR d.departureDate <= :endDate) " +
             "AND (:status IS NULL OR d.status = :status)")
     Page<TourDeparture> findWithFilters(
             @Param("tourId") Integer tourId,
-            @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
             @Param("status") Boolean status,
             Pageable pageable);
 

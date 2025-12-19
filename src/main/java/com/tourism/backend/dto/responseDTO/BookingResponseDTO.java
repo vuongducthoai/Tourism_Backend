@@ -32,7 +32,7 @@ public class BookingResponseDTO {
     private String cancelReason; //Ly do huy don
     private String bookingStatus;
     private Integer departureID;
-    private LocalDate departureDate;
+    private LocalDateTime departureDate;
     private Integer tourID;
     private String tourCode;
     private String tourName;

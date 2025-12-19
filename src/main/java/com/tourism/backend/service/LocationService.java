@@ -31,4 +31,6 @@ public interface LocationService {
     void deleteLocation(Integer id);
 
     String uploadImage(Integer id, MultipartFile file) throws IOException;
+
+    Page<LocationResponse> getAirportNational(Pageable pageable);
 }
