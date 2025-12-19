@@ -97,7 +97,7 @@ public class LocationServiceImpl implements LocationService {
 
         // Auto-fill airport info if not provided
         if ((request.getAirportCode() == null || request.getAirportName() == null)) {
-            com.tourism.backend.utils.VietnamAirportUtils.getAirportInfo(request.getName()).ifPresent(airportInfo -> {
+            com.tourism.backend.util.VietnamAirportUtils.getAirportInfo(request.getName()).ifPresent(airportInfo -> {
                 if (request.getAirportCode() == null) {
                     request.setAirportCode(airportInfo.getCode());
                 }
@@ -138,7 +138,7 @@ public class LocationServiceImpl implements LocationService {
         // Auto-fill airport if changed name and fields are empty
         if (!location.getName().equals(request.getName()) &&
                 (request.getAirportCode() == null || request.getAirportName() == null)) {
-            com.tourism.backend.utils.VietnamAirportUtils.getAirportInfo(request.getName()).ifPresent(airportInfo -> {
+            com.tourism.backend.util.VietnamAirportUtils.getAirportInfo(request.getName()).ifPresent(airportInfo -> {
                 if (request.getAirportCode() == null) {
                     request.setAirportCode(airportInfo.getCode());
                 }

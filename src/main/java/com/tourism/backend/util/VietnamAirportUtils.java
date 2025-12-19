@@ -1,4 +1,4 @@
-package com.tourism.backend.utils;
+package com.tourism.backend.util;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
