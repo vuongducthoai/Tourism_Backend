@@ -125,12 +125,15 @@ public class VectorSyncService {
         content.append("Tour: ").append(tour.getTourName()).append(" (").append(tour.getTourCode()).append("). ");
         content.append("Ngày khởi hành: ").append(departDate).append(". ");
         content.append("Thời gian: ").append(tour.getDuration()).append(". ");
-        content.append("Điểm đến: ").append(tour.getEndLocation().getName()).append(". ");
+        content.append("Điểm đến: ").append(tour.getEndLocation().getName()).append("). ");
 
         DeparturePricing adultPricing = departure.getPricings().stream()
                 .filter(p -> p.getPassengerType() == PassengerType.ADULT)
                 .findFirst()
                 .orElse(null);
+
+        BigDecimal totalDiscount = BigDecimal.ZERO;
+        BigDecimal couponDiscount = BigDecimal.ZERO;
 
         if (adultPricing != null) {
             BigDecimal salePrice = adultPricing.getSalePrice();
@@ -142,12 +145,25 @@ public class VectorSyncService {
             if (discount.compareTo(BigDecimal.ZERO) > 0) {
                 content.append("Giá gốc: ").append(String.format("%,.0f", originalPrice)).append(" VND. ");
                 content.append("Giảm: ").append(String.format("%,.0f", discount)).append(" VND. ");
-                content.append("Tiết kiệm: ").append(discount.multiply(BigDecimal.valueOf(100))
-                        .divide(originalPrice, 0, BigDecimal.ROUND_HALF_UP)).append("%. ");
+                totalDiscount = discount;
             }
         }
 
-        addCouponInfo(content, departure);
+        // ✅ Thêm thông tin coupon vào content VÀ lưu vào metadata
+        if (departure.getCoupon() != null && departure.getCoupon().isValid()) {
+            Coupon coupon = departure.getCoupon();
+            // ✅ CHUYỂN ĐỔI Integer -> BigDecimal
+            couponDiscount = BigDecimal.valueOf(coupon.getDiscountAmount());
+            totalDiscount = totalDiscount.add(couponDiscount);
+
+            content.append("Mã khuyến mãi đặc biệt: ").append(coupon.getCouponCode())
+                    .append(" - Giảm thêm ").append(String.format("%,.0f", couponDiscount)).append(" VND. ");
+        }
+
+        if (totalDiscount.compareTo(BigDecimal.ZERO) > 0) {
+            content.append("Tổng mức giảm: ").append(String.format("%,.0f", totalDiscount)).append(" VND. ");
+        }
+
         content.append("Còn ").append(departure.getAvailableSlots()).append(" chỗ trống. ");
 
         Map<String, Object> metadata = new HashMap<>();
@@ -164,6 +180,12 @@ public class VectorSyncService {
             metadata.put("discount", adultPricing.getOriginalPrice().subtract(adultPricing.getSalePrice()).doubleValue());
         }
 
+        // ✅ LƯU COUPON DISCOUNT VÀO METADATA
+        if (couponDiscount.compareTo(BigDecimal.ZERO) > 0) {
+            metadata.put("couponDiscount", couponDiscount.doubleValue());
+            metadata.put("totalDiscount", totalDiscount.doubleValue());
+        }
+
         List<Float> embedding = vectorService.createEmbedding(content.toString());
 
         VectorDocumentDTO document = VectorDocumentDTO.builder()
@@ -176,9 +198,7 @@ public class VectorSyncService {
                 .build();
 
         vectorService.upsertVector(document);
-    }
-
-    private void addReviewInfo(StringBuilder content, Tour tour) {
+    }    private void addReviewInfo(StringBuilder content, Tour tour) {
         List<Review> reviews = reviewRepository.findByTourTourID(tour.getTourID());
 
         if (!reviews.isEmpty()) {
