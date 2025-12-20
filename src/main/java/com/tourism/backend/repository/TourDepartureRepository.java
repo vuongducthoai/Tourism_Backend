@@ -4,6 +4,7 @@ import com.tourism.backend.entity.Tour;
 import com.tourism.backend.entity.TourDeparture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface TourDepartureRepository extends JpaRepository<TourDeparture, Integer> {
+public interface TourDepartureRepository extends JpaRepository<TourDeparture, Integer>, JpaSpecificationExecutor<TourDeparture> {
     @Query("SELECT d FROM TourDeparture d " +
             "JOIN d.transports t " + // Join với bảng vận chuyển
             "WHERE d.tour.tourCode = :tourCode " +
@@ -30,7 +31,7 @@ public interface TourDepartureRepository extends JpaRepository<TourDeparture, In
     int decreaseAvailableSlots(@Param("id") Integer id, @Param("amount") Integer amount);
     List<TourDeparture> findByTour_TourIDAndDepartureDateAfterAndStatusTrueOrderByDepartureDateAsc(
             Integer tourId,
-            LocalDate currentDate
+            LocalDateTime currentDate
     );
 
     List<TourDeparture> findByCoupon_CouponID(Integer couponId);

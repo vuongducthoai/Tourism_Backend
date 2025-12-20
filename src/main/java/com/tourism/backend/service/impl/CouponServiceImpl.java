@@ -56,6 +56,7 @@ public class CouponServiceImpl implements CouponService {
 
         // 3. Lưu Coupon xuống DB trước để lấy ID
         Coupon savedCoupon = couponRepository.save(coupon);
+        System.out.println("CouponID: " + savedCoupon.getCouponID());
 
         // 4. Nếu là loại DEPARTURE, tìm các chuyến đi và gán coupon_id cho chúng
         if (request.getCouponType() == CouponType.DEPARTURE) {

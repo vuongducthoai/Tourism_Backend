@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class DepartureSummaryResponse {
     private Integer departureID;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime departureDate;
     private Boolean status;
     private Integer availableSlots;

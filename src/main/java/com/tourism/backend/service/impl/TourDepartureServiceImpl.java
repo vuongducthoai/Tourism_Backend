@@ -16,10 +16,12 @@ import com.tourism.backend.exception.ResourceNotFoundException;
 import com.tourism.backend.repository.*;
 import com.tourism.backend.service.TourDepartureService;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,7 @@ public class TourDepartureServiceImpl implements TourDepartureService {
     private final DeparturePricingRepository pricingRepository;
     private final DepartureTransportRepository transportRepository;
     private final EntityManager entityManager;
+    private final LocationRepository locationRepository;
 
 
     @Override
@@ -202,11 +205,45 @@ public class TourDepartureServiceImpl implements TourDepartureService {
 
     @Override
     public Page<DepartureSummaryResponse> getAllDepartures(Integer tourId, LocalDateTime startDate, LocalDateTime endDate, Boolean status, Pageable pageable) {
-        log.info("Fetching departures with filters - tourId: {}, startDate: {}, endDate: {}, status: {}",
-                tourId, startDate, endDate, status);
+        Specification<TourDeparture> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
 
-        Page<TourDeparture> departures = departureRepository
-                .findWithFilters(tourId, startDate, endDate, status, pageable);
+            // Filter by tourId
+            if (tourId != null) {
+                predicates.add(criteriaBuilder.equal(root.get("tour").get("tourID"), tourId));
+            }
+
+            // Filter by status
+            if (status != null) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+            }
+
+            // Filter by date range
+            if (startDate != null && endDate != null) {
+                // Both startDate and endDate provided - filter between
+                predicates.add(criteriaBuilder.between(
+                        root.get("departureDate"),
+                        startDate,
+                        endDate
+                ));
+            } else if (startDate != null) {
+                // Only startDate provided - filter from startDate onwards
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                        root.get("departureDate"),
+                        startDate
+                ));
+            } else if (endDate != null) {
+                // Only endDate provided - filter up to endDate
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(
+                        root.get("departureDate"),
+                        endDate
+                ));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<TourDeparture> departures = departureRepository.findAll(spec, pageable);
 
         return departures.map(this::mapToDepartureSummaryResponse);
 
@@ -421,6 +458,7 @@ public class TourDepartureServiceImpl implements TourDepartureService {
             }
         }
 
+
         return DepartureDetailResponse.builder()
                 .departureID(departure.getDepartureID())
                 .departureDate(departure.getDepartureDate())
@@ -505,15 +543,46 @@ public class TourDepartureServiceImpl implements TourDepartureService {
         if (transport == null) {
             return null;
         }
+
+        String startPointDisplay = transport.getStartPoint();
+        String endPointDisplay = transport.getEndPoint();
+
+        if ("PLANE".equals(transport.getVehicleTyle().name())) {
+            if (transport.getStartPoint() != null) {
+                startPointDisplay = getAirportNameByCode(transport.getStartPoint());
+            }
+            if (transport.getEndPoint() != null) {
+                endPointDisplay = getAirportNameByCode(transport.getEndPoint());
+            }
+        }
         return DepartureTransportResponse.builder()
                 .transportID(transport.getTransportID())
                 .type(transport.getType())
                 .transportCode(transport.getTransportCode())
                 .vehicleName(transport.getVehicleName())
-                .startPoint(transport.getStartPoint())
-                .endPoint(transport.getEndPoint())
+                .startPoint(startPointDisplay)
+                .endPoint(endPointDisplay)
                 .departTime(transport.getDepartTime())
                 .arrivalTime(transport.getArrivalTime())
                 .build();
+    }
+
+    private String getAirportNameByCode(String airportCode) {
+        if (airportCode == null || airportCode.trim().isEmpty()) {
+            return airportCode;
+        }
+
+        try {
+            Location location = locationRepository.findByAirportCode(airportCode)
+                    .orElse(null);
+
+            if (location != null && location.getAirportName() != null) {
+                return location.getAirportName() + " (" + airportCode + ")";
+            }
+        } catch (Exception e) {
+            log.warn("Could not find airport name for code: " + airportCode, e);
+        }
+
+        return airportCode;
     }
 }
