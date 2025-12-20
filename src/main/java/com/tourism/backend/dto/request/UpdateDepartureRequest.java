@@ -14,7 +14,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UpdateDepartureRequest {
-    @Future(message = "Ngày khởi hành phải là ngày trong tương lai")
     private LocalDateTime departureDate;
 
     @Min(value = 1, message = "Số chỗ trống phải >= 1")

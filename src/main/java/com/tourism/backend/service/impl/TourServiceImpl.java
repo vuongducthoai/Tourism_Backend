@@ -578,7 +578,7 @@ public class TourServiceImpl implements TourService {
     @Override
     @Transactional(readOnly = true)
     public List<DepartureSimpleResponse> getDeparturesByTour(Integer tourId) {
-        LocalDate tomorrow = LocalDate.now();
+        LocalDateTime tomorrow = LocalDate.now().atStartOfDay();
 
         List<TourDeparture> departures = tourDepartureRepository
                 .findByTour_TourIDAndDepartureDateAfterAndStatusTrueOrderByDepartureDateAsc(tourId, tomorrow);

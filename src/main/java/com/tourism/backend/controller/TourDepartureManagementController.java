@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -71,11 +72,13 @@ public class TourDepartureManagementController {
         return ResponseEntity.ok(result);
     }
 
+
+
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllDepartures(
             @RequestParam(required = false) Integer tourId,
-            @RequestParam(required = false) LocalDateTime startDate,
-            @RequestParam(required = false) LocalDateTime endDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) Boolean status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -87,9 +90,18 @@ public class TourDepartureManagementController {
                 : Sort.Direction.DESC;
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        LocalDateTime startDateTime = null;
+        LocalDateTime endDateTime = null;
 
+        if (startDate != null) {
+            startDateTime = startDate.atStartOfDay();
+        }
+
+        if (endDate != null) {
+            endDateTime = endDate.atTime(23, 59, 59);
+        }
         Page<DepartureSummaryResponse> departures = departureService.getAllDepartures(
-                tourId, startDate, endDate, status, pageable);
+                tourId, startDateTime, endDateTime, status, pageable);
 
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
