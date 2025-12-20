@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,16 +37,35 @@ public class VectorSyncService {
         List<Tour> tours = tourRepository.findAll();
         int tourCount = 0;
         int departureCount = 0;
+        LocalDate today = LocalDate.now();
 
         for (Tour tour : tours) {
             try {
+                // ✅ CHỈ SYNC TOUR NẾU CÓ ÍT NHẤT 1 DEPARTURE CÒN HOẠT ĐỘNG
+                boolean hasActiveDeparture = tour.getDepartures() != null &&
+                        tour.getDepartures().stream()
+                                .anyMatch(dep -> {
+                                    LocalDate depDate = getDepartureDate(dep);
+                                    return depDate != null && depDate.isAfter(today) &&
+                                            Boolean.TRUE.equals(dep.getStatus());
+                                });
+
+                if (!hasActiveDeparture) {
+                    log.debug("⏭️ Skipping tour {} - no active departures", tour.getTourCode());
+                    continue;
+                }
+
                 syncTourSummary(tour);
                 tourCount++;
 
                 if (tour.getDepartures() != null) {
                     for (TourDeparture departure : tour.getDepartures()) {
-                        syncTourDeparture(tour, departure);
-                        departureCount++;
+                        // ✅ CHỈ SYNC DEPARTURE CÓ NGÀY KHỞI HÀNH TRONG TƯƠNG LAI
+                        LocalDate depDate = getDepartureDate(departure);
+                        if (depDate != null && depDate.isAfter(today) && Boolean.TRUE.equals(departure.getStatus())) {
+                            syncTourDeparture(tour, departure);
+                            departureCount++;
+                        }
                     }
                 }
 
@@ -150,14 +170,31 @@ public class VectorSyncService {
         }
 
         // ✅ Thêm thông tin coupon vào content VÀ lưu vào metadata
+        // ✅ CHỈ LẤY COUPON CÒN HẠN: startDate <= now <= endDate
         if (departure.getCoupon() != null && departure.getCoupon().isValid()) {
             Coupon coupon = departure.getCoupon();
-            // ✅ CHUYỂN ĐỔI Integer -> BigDecimal
-            couponDiscount = BigDecimal.valueOf(coupon.getDiscountAmount());
-            totalDiscount = totalDiscount.add(couponDiscount);
+            LocalDateTime now = LocalDateTime.now();
 
-            content.append("Mã khuyến mãi đặc biệt: ").append(coupon.getCouponCode())
-                    .append(" - Giảm thêm ").append(String.format("%,.0f", couponDiscount)).append(" VND. ");
+            // ✅ KIỂM TRA COUPON ĐÃ ĐẾN NGÀY SỬ DỤNG VÀ CHƯA HẾT HẠN
+            boolean isWithinValidPeriod =
+                    (coupon.getStartDate() == null || now.isAfter(coupon.getStartDate()) || now.isEqual(coupon.getStartDate())) &&
+                            (coupon.getEndDate() == null || now.isBefore(coupon.getEndDate()));
+
+            if (isWithinValidPeriod) {
+                // ✅ CHUYỂN ĐỔI Integer -> BigDecimal
+                couponDiscount = BigDecimal.valueOf(coupon.getDiscountAmount());
+                totalDiscount = totalDiscount.add(couponDiscount);
+
+                content.append("Mã khuyến mãi đặc biệt: ").append(coupon.getCouponCode())
+                        .append(" - Giảm thêm ").append(String.format("%,.0f", couponDiscount)).append(" VND. ");
+
+                if (coupon.getStartDate() != null) {
+                    content.append("Có hiệu lực từ: ").append(coupon.getStartDate().toLocalDate()).append(". ");
+                }
+                if (coupon.getEndDate() != null) {
+                    content.append("Hết hạn: ").append(coupon.getEndDate().toLocalDate()).append(". ");
+                }
+            }
         }
 
         if (totalDiscount.compareTo(BigDecimal.ZERO) > 0) {
@@ -180,10 +217,21 @@ public class VectorSyncService {
             metadata.put("discount", adultPricing.getOriginalPrice().subtract(adultPricing.getSalePrice()).doubleValue());
         }
 
-        // ✅ LƯU COUPON DISCOUNT VÀO METADATA
+        // ✅ LƯU COUPON DISCOUNT VÀ THÔNG TIN THỜI HAN VÀO METADATA
         if (couponDiscount.compareTo(BigDecimal.ZERO) > 0) {
             metadata.put("couponDiscount", couponDiscount.doubleValue());
             metadata.put("totalDiscount", totalDiscount.doubleValue());
+
+            Coupon coupon = departure.getCoupon();
+            if (coupon != null) {
+                metadata.put("couponCode", coupon.getCouponCode());
+                if (coupon.getStartDate() != null) {
+                    metadata.put("couponStartDate", coupon.getStartDate().toString());
+                }
+                if (coupon.getEndDate() != null) {
+                    metadata.put("couponEndDate", coupon.getEndDate().toString());
+                }
+            }
         }
 
         List<Float> embedding = vectorService.createEmbedding(content.toString());
@@ -250,10 +298,33 @@ public class VectorSyncService {
     public void syncAllLocations() {
         log.info("🔄 Starting location sync...");
 
-        List<Location> locations = locationRepository.findLocationsWithActiveTours();        int count = 0;
+        List<Location> locations = locationRepository.findLocationsWithActiveTours();
+        int count = 0;
+        LocalDate today = LocalDate.now();
 
         for (Location location : locations) {
             try {
+                // ✅ CHỈ SYNC LOCATION NẾU CÓ ÍT NHẤT 1 TOUR CÓ DEPARTURE CÒN HOẠT ĐỘNG
+                boolean hasActiveTourWithDeparture = false;
+
+                // Kiểm tra tours có điểm đến là location này
+                if (location.getEndPoint() != null) {
+                    hasActiveTourWithDeparture = location.getEndPoint().stream()
+                            .filter(tour -> Boolean.TRUE.equals(tour.getStatus()))
+                            .anyMatch(tour -> tour.getDepartures() != null &&
+                                    tour.getDepartures().stream()
+                                            .anyMatch(dep -> {
+                                                LocalDate depDate = getDepartureDate(dep);
+                                                return depDate != null && depDate.isAfter(today) &&
+                                                        Boolean.TRUE.equals(dep.getStatus());
+                                            }));
+                }
+
+                if (!hasActiveTourWithDeparture) {
+                    log.debug("⏭️ Skipping location {} - no tours with active departures", location.getName());
+                    continue;
+                }
+
                 String content = buildLocationContent(location);
 
                 // ✅ THÊM LOCATIONID VÀO METADATA

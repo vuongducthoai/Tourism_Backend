@@ -651,17 +651,20 @@ public class TourServiceImpl implements TourService {
                 .collect(Collectors.toList());
     }
     @Override
-    public List<TourResponseDTO> searchTours(SearchToursRequestDTO dto,Integer userId) {
+    public List<TourResponseDTO> searchTours(SearchToursRequestDTO dto, Integer userId) {
         List<Tour> tours = tourRepository.searchToursDynamically(dto);
 
-        // 1. Lấy danh sách Tour ID yêu thích của User (nếu có userId)
         Set<Integer> favoriteTourIds = (userId != null)
                 ? favoriteTourService.getFavoriteTourIdsByUserId(userId)
-                : Collections.emptySet(); // Nếu không có userId, trả về Set rỗng
+                : Collections.emptySet();
 
-        // 2. Map và kiểm tra trạng thái yêu thích
         return tours.stream()
                 .map(tour -> tourConvert.convertToTourFavoriteReponsetoryDTO(tour, favoriteTourIds))
+                // Lọc bỏ tour không có ngày khởi hành
+                .filter(tourDto ->
+                        tourDto.getDepartureDates() != null
+                                && !tourDto.getDepartureDates().isEmpty()
+                )
                 .collect(Collectors.toList());
     }
 

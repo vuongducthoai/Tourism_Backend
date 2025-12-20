@@ -2,10 +2,12 @@ package com.tourism.backend.service.chatbot;
 
 import com.google.gson.Gson;
 import com.tourism.backend.dto.chatbot.*;
+import com.tourism.backend.entity.DepartureTransport;
 import com.tourism.backend.entity.Tour;
 import com.tourism.backend.entity.TourDeparture;
 import com.tourism.backend.entity.TourImage;
 import com.tourism.backend.enums.PassengerType;
+import com.tourism.backend.enums.TransportType;
 import com.tourism.backend.repository.TourDepartureRepository;
 import com.tourism.backend.repository.TourRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -43,8 +46,16 @@ public class ChatbotService {
         try {
             log.info("📩 Received message: {}", request.getMessage());
 
+            // ✅ Phát hiện discount query để search thêm documents
+            boolean isDiscountQuery = request.getMessage().toLowerCase()
+                    .matches(".*(giảm\\s*(giá|sâu)|ưu\\s*đãi|khuyến\\s*mãi|coupon|mã\\s*giảm).*");
+
+            // ✅ Tăng topK khi hỏi về discount/coupon để lấy thêm tour có coupon
+            int topK = isDiscountQuery ? 50 : 10;
+            log.info("🔍 Search with topK={}, isDiscountQuery={}", topK, isDiscountQuery);
+
             List<VectorDocumentDTO> relevantDocs = vectorService.searchSimilar(
-                    request.getMessage(), 10
+                    request.getMessage(), topK
             );
 
             // ✅ Truyền userMessage để context có thể lọc và sắp xếp
@@ -136,7 +147,24 @@ public class ChatbotService {
                 return false;
             }
         })) {
-            context.append(" (các tour có mã giảm giá coupon, sắp xếp theo mức giảm từ cao đến thấp)");
+            // ✅ ĐẾM SỐ TOUR CÓ COUPON
+            long tourWithCouponCount = filteredDocs.stream()
+                    .filter(d -> {
+                        try {
+                            Map<String, Object> metadata = gson.fromJson(d.getMetadata(), Map.class);
+                            return "TOUR_DEPARTURE".equals(d.getType())
+                                    && metadata.containsKey("couponDiscount")
+                                    && ((Number) metadata.get("couponDiscount")).doubleValue() > 0;
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    })
+                    .count();
+
+            context.append(" - QUAN TRỌNG: Có CHÍNH XÁC ").append(tourWithCouponCount)
+                    .append(" tour có mã giảm giá coupon (sắp xếp theo mức giảm từ cao đến thấp)");
+
+            log.info("🎯 Tìm thấy {} tour có mã giảm giá coupon", tourWithCouponCount);
         }
 
         context.append(":\n\n");
@@ -151,8 +179,10 @@ public class ChatbotService {
                 if ("TOUR_DEPARTURE".equals(doc.getType())) {
                     double salePrice = ((Number) metadata.getOrDefault("salePrice", 0)).doubleValue();
                     double originalPrice = ((Number) metadata.getOrDefault("originalPrice", salePrice)).doubleValue();
+                    String tourName = (String) metadata.getOrDefault("tourName", "Unknown Tour");
 
-                    context.append("   [Mã tour: ").append(metadata.get("tourCode"))
+                    context.append("   [Tên tour: ").append(tourName)
+                            .append(", Mã tour: ").append(metadata.get("tourCode"))
                             .append(", Ngày: ").append(metadata.get("departureDate"))
                             .append(", Giá ADULT: ").append(String.format("%,.0f", salePrice))
                             .append(" VND");
@@ -161,11 +191,18 @@ public class ChatbotService {
                     if (metadata.containsKey("couponDiscount")) {
                         double couponDiscount = ((Number) metadata.get("couponDiscount")).doubleValue();
                         if (couponDiscount > 0) {
-                            // ✅ Tour CÓ COUPON - Hiển thị Mã giảm giá
+                            // ✅ Tour CÓ COUPON - Hiển thị Mã giảm giá với thông tin đầy đủ
                             context.append(", Giá gốc: ").append(String.format("%,.0f", originalPrice))
                                     .append(" VND")
-                                    .append(", Mã giảm giá (COUPON): ").append(String.format("%,.0f", couponDiscount))
+                                    .append(", 🎁 MÃ GIẢM GIÁ ĐẶC BIỆT: ").append(String.format("%,.0f", couponDiscount))
                                     .append(" VND");
+
+                            // Thêm thông tin coupon nếu có
+                            if (metadata.containsKey("couponCode")) {
+                                context.append(" (Mã: ").append(metadata.get("couponCode")).append(")");
+                            }
+
+                            log.info("📊 Tour {} có coupon giảm giá: {} VND", tourName, String.format("%,.0f", couponDiscount));
                         }
                     } else {
                         // ✅ Tour KHÔNG CÓ COUPON - Chỉ hiển thị giảm giá thông thường
@@ -227,15 +264,47 @@ public class ChatbotService {
             
             🔹 NHIỆM VỤ PHÂN TÍCH DỮ LIỆU:
             1. **Giá:** Luôn dùng "Giá ADULT" (người lớn) làm chuẩn.
-            2. **Giảm giá/Khuyến mãi:**
-              - Khi người dùng hỏi "giảm giá", "giảm sâu", "ưu đãi", "khuyến mãi", "coupon", "mã giảm giá":
-                * CHỈ giới thiệu các tour có "Mã giảm giá" (coupon discount trong context)
-                * Sắp xếp theo mức "Mã giảm giá" từ cao đến thấp
-                * Ưu tiên tour có mức giảm giá coupon lớn nhất
-              - Trong Context, tour có coupon sẽ hiển thị: "Mã giảm giá: X VND"
-              - Tour không có coupon sẽ hiển thị: "Giảm: X VND" (không đề cập trong trường hợp này)
+            
+            2. **⚠️ QUY TẮC BẮT BUỘC KHI NGƯỜI DÙNG HỎI VỀ GIẢM GIÁ/COUPON:**
+               
+               🚨 TUYỆT ĐỐI PHẢI TUÂN THỦ:
+               - Nếu Context có dòng "QUAN TRỌNG: Có CHÍNH XÁC X tour có mã giảm giá coupon"
+               - BẠN PHẢI GIỚI THIỆU **TẤT CẢ X TOUR ĐÓ**, KHÔNG ĐƯỢC BỎ QUA BẤT KỲ TOUR NÀO!
+               - KHÔNG ĐƯỢC chỉ giới thiệu 1 hoặc một vài tour, PHẢI GIỚI THIỆU HET!
+               
+               📋 CÁCH NHẬN DIỆN TOUR CÓ COUPON:
+               - Trong Context, tìm dòng có "🎁 MÃ GIẢM GIÁ ĐẶC BIỆT: X VND"
+               - Tour KHÔNG có dòng này thì BỎ QUA, không được đề cập
+               
+               📝 FORMAT BẮT BUỘC:
+               - Câu mở đầu: "Hiện tại có [SỐ LƯỢNG CHÍNH XÁC] tour đang có ưu đãi giảm giá đặc biệt:"
+               - Liệt kê TỪNG TOUR theo thứ tự từ cao đến thấp
+               - Mỗi tour PHẢI có đầy đủ: Tên, Thời lượng, Ngày, Giá gốc, Mã giảm giá, Link
+               
+               ✅ VÍ DỤ ĐÚNG (khi có 2 tour):
+               ```
+               Hiện tại có 2 tour đang có ưu đãi giảm giá đặc biệt:
+
+               🎯 **Tour Phú Quốc 3N2Đ**
+               3 Ngày 2 Đêm | 📅 20/12/2025
+               💰 Giá: 8,000,000 VND | 🎁 Mã giảm giá: 1,000,000 VND
+               **[Xem chi tiết](/tour/TOUR-PQ-01)**
+
+               🎯 **Tour Hà Giang 3N2Đ**
+               3 Ngày 2 Đêm | 📅 20/02/2026
+               💰 Giá: 6,100,000 VND | 🎁 Mã giảm giá: 100,000 VND
+               **[Xem chi tiết](/tour/TOUR-HG-04)**
+
+               Bạn có thể xem thêm các tour khác trên hệ thống.
+               ```
+               
+               ❌ SAI LẦM CẦN TRÁNH:
+               - ❌ Chỉ giới thiệu 1 tour khi Context có 2 tour
+               - ❌ Viết "có tour này" thay vì "có 2 tour"
+               - ❌ Bỏ qua tour có mức giảm thấp hơn
+            
             3. **Đánh giá:** Chỉ đề xuất tour có Rating >= 4.0 sao nếu khách hỏi về chất lượng.
-            4. **Thời gian:** Ưu tiên các ngày khởi hành gần nhất so với hiện tại.
+            4. **Thời gian:** Ưu tiên các ngày khởi hành gần nhất so với hiện tại. Tất cả tour đề xuất đều có ngày khởi hành trong tương lai.
             
             🔹 QUY TẮC LINK (TUYỆT ĐỐI TUÂN THỦ):
             
@@ -263,16 +332,21 @@ public class ChatbotService {
             🔹 FORMAT VĂN BẢN (STYLE HIỆN ĐẠI & GỌN GÀNG):
             - **Không xuống dòng kép** giữa các thông tin của cùng một tour.
             - Khoảng cách giữa các đoạn không lớn.
-            - Sử dụng icon để làm nổi bật thay vì gạch đầu dòng và point.
-            - **In đậm** tên Tour/Địa điểm và Giá tiền.
-            - Cấu trúc mong muốn:
+            - Sử dụng icon để làm nổi bật (🎁 💰 📅 ⭐).
+            - **In đậm** tên Tour và các thông tin quan trọng.
+            - **KHI CÓ NHIỀU TOUR**: Giới thiệu lần lượt từng tour, mỗi tour trên một đoạn riêng biệt.
+            - Cấu trúc mong muốn cho mỗi tour:
                
-               **[Tên Tour]**
-               [Thời lượng] | [Ngày đi gần nhất]
-               Giá: (hiển thị giá gốc originalPrice trong Context) [Nếu có: Giảm X%%]
+               **🎯 [Tên Tour]**
+               [Thời lượng] | 📅 [Ngày khởi hành]
+               💰 Giá: [Giá gốc] VND | 🎁 Mã giảm giá: [Số tiền giảm] VND
                **[Xem chi tiết](/tour/TOUR-CODE)**
+               
+               (Xuống dòng trống trước khi giới thiệu tour tiếp theo)
             
-            - Giọng văn: Ngắn gọn, súc tích, thân thiện.
+            - Giọng văn: Thân thiện, nhiệt tình, súc tích.
+            - MỞ ĐẦU: "Hiện tại có [số lượng] tour đang có ưu đãi giảm giá đặc biệt:"
+            - KẾT THÚC: "Bạn có thể xem thêm các tour khác trên hệ thống."
             
             === DỮ LIỆU HỆ THỐNG (CONTEXT) ===
             %s
@@ -298,7 +372,7 @@ public class ChatbotService {
                 .filter(d -> "TOUR_DEPARTURE".equals(d.getType()))
                 .map(VectorDocumentDTO::getEntityId)
                 .distinct()
-                .limit(5)
+                .limit(3)  // ✅ Giảm từ 5 → 3 để tránh quá nhiều departures cùng tour
                 .collect(Collectors.toList()));
 
         return result;
@@ -309,6 +383,8 @@ public class ChatbotService {
             List<VectorDocumentDTO> docs
     ) {
         List<ChatMessageResponse.TourSuggestion> suggestions = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        Set<Integer> addedTourIds = new HashSet<>(); // ✅ Tránh trùng tour
 
         List<Integer> departureIds = entityIds.get("departures");
         if (departureIds != null && !departureIds.isEmpty()) {
@@ -316,9 +392,14 @@ public class ChatbotService {
 
             for (TourDeparture dep : departures) {
                 Tour tour = dep.getTour();
-                if (tour == null) continue;
+                if (tour == null || addedTourIds.contains(tour.getTourID())) continue; // ✅ Bỏ qua nếu tour đã thêm
 
-                suggestions.add(buildSuggestionFromDeparture(dep, tour, docs));
+                // ✅ CHỈ GỢI Ý DEPARTURE CÓ NGÀY KHỞI HÀNH TRONG TƯƠNG LAI
+                LocalDate depDate = getDepartureDate(dep);
+                if (depDate != null && depDate.isAfter(today) && Boolean.TRUE.equals(dep.getStatus())) {
+                    suggestions.add(buildSuggestionFromDeparture(dep, tour, docs));
+                    addedTourIds.add(tour.getTourID()); // ✅ Đánh dấu tour đã thêm
+                }
             }
         }
 
@@ -329,7 +410,21 @@ public class ChatbotService {
 
                 for (Tour tour : tours) {
                     if (suggestions.size() >= 3) break;
-                    suggestions.add(buildSuggestionFromTour(tour, docs));
+                    if (addedTourIds.contains(tour.getTourID())) continue; // ✅ Bỏ qua nếu tour đã thêm
+
+                    // ✅ CHỈ GỢI Ý TOUR NẾU CÓ ÍT NHẤT 1 DEPARTURE CÒN HOẠT ĐỘNG
+                    boolean hasActiveDeparture = tour.getDepartures() != null &&
+                            tour.getDepartures().stream()
+                                    .anyMatch(dep -> {
+                                        LocalDate depDate = getDepartureDate(dep);
+                                        return depDate != null && depDate.isAfter(today) &&
+                                                Boolean.TRUE.equals(dep.getStatus());
+                                    });
+
+                    if (hasActiveDeparture) {
+                        suggestions.add(buildSuggestionFromTour(tour, docs));
+                        addedTourIds.add(tour.getTourID()); // ✅ Đánh dấu tour đã thêm
+                    }
                 }
             }
         }
@@ -382,7 +477,14 @@ public class ChatbotService {
                 .map(TourImage::getImageURL)
                 .orElse(null);
 
+        // ✅ CHỈ LẤY GIÁ TỪ CÁC DEPARTURE CÒN HOẠT ĐỘNG
+        LocalDate today = LocalDate.now();
         Double minPrice = tour.getDepartures().stream()
+                .filter(dep -> {
+                    LocalDate depDate = getDepartureDate(dep);
+                    return depDate != null && depDate.isAfter(today) &&
+                            Boolean.TRUE.equals(dep.getStatus());
+                })
                 .flatMap(dep -> dep.getPricings().stream())
                 .filter(p -> p.getPassengerType() == PassengerType.ADULT)
                 .map(p -> p.getSalePrice().doubleValue())
@@ -482,5 +584,20 @@ public class ChatbotService {
         }
 
         return actions;
+    }
+
+    /**
+     * ✅ Lấy ngày khởi hành từ DepartureTransport OUTBOUND đầu tiên
+     */
+    private LocalDate getDepartureDate(TourDeparture departure) {
+        if (departure.getTransports() == null || departure.getTransports().isEmpty()) {
+            return null;
+        }
+
+        return departure.getTransports().stream()
+                .filter(t -> t.getType() == TransportType.OUTBOUND)
+                .min(Comparator.comparing(DepartureTransport::getDepartTime))
+                .map(t -> t.getDepartTime().toLocalDate())
+                .orElse(null);
     }
 }
