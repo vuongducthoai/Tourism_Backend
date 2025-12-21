@@ -39,9 +39,7 @@ public class SecurityConfig {
                 // 1. Tắt CSRF (Quan trọng khi test bằng Postman)
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // 2. Cấu hình quyền truy cập
                 .authorizeHttpRequests(auth -> auth
-                        // Cho phép truy cập tự do vào API tạo tour (để test)
                         .requestMatchers(
                                 "/api/tours/**",
                                 "/api/locations/**",
@@ -75,7 +73,8 @@ public class SecurityConfig {
                                 "/api/payment/**",
                                 "/api/chatbot/**",
                                 "/api/admin/departures/**",
-                                "/api/admin/auth/**"
+                                "/api/admin/auth/**",
+                                "/api/v1/faker/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(

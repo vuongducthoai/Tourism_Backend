@@ -30,9 +30,9 @@ public interface CouponRepository extends JpaRepository<Coupon, Integer> {
 
         @Query("""
        SELECT c FROM Coupon c
-       WHERE c.tourDeparture IS NULL
-       ORDER BY 
-           CASE 
+       WHERE c.couponType = 'GLOBAL'
+       ORDER BY
+           CASE
                WHEN (
                    c.startDate <= CURRENT_TIMESTAMP
                    AND c.endDate >= CURRENT_TIMESTAMP
@@ -95,8 +95,8 @@ public interface CouponRepository extends JpaRepository<Coupon, Integer> {
 
         @Query("""
        SELECT c FROM Coupon c
-       WHERE c.tourDeparture IS NOT NULL
-       ORDER BY 
+       WHERE c.couponType = 'DEPARTURE'
+       ORDER BY
            CASE 
                WHEN (
                    c.startDate <= CURRENT_TIMESTAMP 

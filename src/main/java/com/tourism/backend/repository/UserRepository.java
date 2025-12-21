@@ -4,12 +4,12 @@ import com.tourism.backend.dto.responseDTO.DashboardStatsDTO;
 import com.tourism.backend.entity.User;
 import com.tourism.backend.enums.Role;
 import com.tourism.backend.repository.custom.UserRepositoryCustom;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +25,10 @@ public interface UserRepository extends JpaRepository<User, Integer> , UserRepos
 
     Optional<User> findByVerificationToken(String token);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.lastActiveAt = :lastActiveAt WHERE u.email = :email")
+    void updateLastActiveAt(@Param("email") String email, @Param("lastActiveAt") LocalDateTime lastActiveAt);
 
     // Thống kê tăng trưởng User theo ngày (lấy Role được truyền vào)
     @Query("SELECT new com.tourism.backend.dto.responseDTO.DashboardStatsDTO$DailyUserGrowth(" +

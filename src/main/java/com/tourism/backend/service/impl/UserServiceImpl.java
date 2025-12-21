@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.tourism.backend.exception.BadRequestException;
 import com.tourism.backend.exception.NotFoundException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,7 +32,10 @@ import java.io.IOException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -182,14 +186,68 @@ public class UserServiceImpl implements UserService {
     @Override
     public Page<UserReaponseDTO> searchUsers(UserSearchRequestDTO searchDTO, Pageable pageable) {
 
-        Page<User> userPage = userRepository.searchUsers(searchDTO, pageable);
+        log.info("🔍 Searching users with filters: {}", searchDTO);
 
-        // Map status thủ công vì ModelMapper có thể chưa map
-        return userPage.map(user -> {
-            UserReaponseDTO dto = userConverter.convertToUserResponseDTO(user);
-            dto.setStatus(user.getStatus());
-            return dto;
-        });
+        Pageable unpaged = Pageable.unpaged();
+        Page<User> allUsersPage = userRepository.searchUsers(searchDTO, unpaged);
+
+        log.info("📊 Tìm thấy {} users", allUsersPage.getTotalElements());
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime fiveMinutesAgo = now.minusMinutes(5);
+        LocalDateTime thirtyMinutesAgo = now.minusMinutes(30);
+
+        List<UserReaponseDTO> allDtoList = allUsersPage.getContent().stream()
+                .map(user -> {
+                    UserReaponseDTO dto = userConverter.convertToUserResponseDTO(user);
+                    dto.setStatus(user.getStatus());
+                    dto.setLastActiveAt(user.getLastActiveAt());
+
+                    String activityStatus;
+                    if (user.getLastActiveAt() == null) {
+                        activityStatus = "Offline";
+                    } else if (user.getLastActiveAt().isAfter(fiveMinutesAgo)) {
+                        activityStatus = "Online";
+                    } else if (user.getLastActiveAt().isAfter(thirtyMinutesAgo)) {
+                        activityStatus = "Away";
+                    } else {
+                        activityStatus = "Offline";
+                    }
+
+                    dto.setActivityStatus(activityStatus);
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        allDtoList.sort(Comparator
+                .comparingInt((UserReaponseDTO dto) -> getActivityPriority(dto.getActivityStatus()))
+                .thenComparing(
+                        UserReaponseDTO::getLastActiveAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())
+                )
+        );
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), allDtoList.size());
+
+        List<UserReaponseDTO> pagedList = allDtoList.subList(start, end);
+
+        log.info("✅ Trả về trang {} với {} users (Online lên đầu)",
+                pageable.getPageNumber(), pagedList.size());
+
+        return new PageImpl<>(pagedList, pageable, allDtoList.size());
+    }
+
+    private int getActivityPriority(String activityStatus) {
+        if (activityStatus == null) {
+            return 4;
+        }
+        return switch (activityStatus) {
+            case "Online" -> 1;
+            case "Away" -> 2;
+            case "Offline" -> 3;
+            default -> 4;
+        };
     }
 
     @Override
