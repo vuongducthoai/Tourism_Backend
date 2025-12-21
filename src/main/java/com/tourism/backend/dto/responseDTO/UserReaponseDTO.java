@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,5 +20,7 @@ public class UserReaponseDTO {
     private String email;
     private String avatar;
     private Boolean status;
+    private LocalDateTime lastActiveAt;
+    private String activityStatus;
 }
 

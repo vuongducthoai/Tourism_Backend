@@ -307,7 +307,10 @@ public class PaymentServiceImpl implements PaymentService {
             payment.setTransactionId(String.valueOf(orderCode));
             payment.setAmount(BigDecimal.valueOf(request.getAmount()));
             payment.setStatus(PaymentStatus.PENDING);
+            payment.setTimeLimit(LocalDateTime.now().plusHours(24));
             payment.setPaymentDate(LocalDateTime.now());
+            booking.setBookingStatus(BookingStatus.PENDING_CONFIRMATION);
+            bookingRepository.save(booking);
             paymentRepository.save(payment);
 
             log.info("Payment record saved with transaction ID: {}", orderCode);
@@ -602,7 +605,7 @@ public class PaymentServiceImpl implements PaymentService {
                 }
 
                 // Update booking status
-                booking.setBookingStatus(BookingStatus.PAID);
+                booking.setBookingStatus(BookingStatus.PENDING_CONFIRMATION);
 
                 // Update available slots
                 int currentSlots = booking.getTourDeparture().getAvailableSlots();

@@ -217,6 +217,7 @@ public class BookingServiceImpl implements BookingService {
             }
 
             pointDiscount = pointsToRedeem.multiply(BigDecimal.valueOf(1000));
+            System.out.println(pointsToRedeem + "edqwdwqdqwdqw");
             user.setCoinBalance(user.getCoinBalance().subtract(pointsToRedeem));
 
             System.out.println("Points used: " + request.getPointsUsed() +

@@ -1,5 +1,6 @@
 package com.tourism.backend.security;
 
+import com.tourism.backend.repository.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,6 +16,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Collections;
 
 @Component
@@ -23,6 +25,7 @@ import java.util.Collections;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(
@@ -52,6 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
                 log.debug("Set authentication for user: {} with role: {}", email, role);
+                updateUserActivityAsync(email);
             }
         } catch (ExpiredJwtException e) {
             log.error("JWT token expired: {}", e.getMessage());
@@ -71,5 +75,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return bearerToken.substring(7);
         }
         return null;
+    }
+
+    private void updateUserActivityAsync(String email) {
+        try {
+            userRepository.updateLastActiveAt(email, LocalDateTime.now());
+            log.debug("Updated lastActiveAt for user: {}", email);
+        } catch (Exception e) {
+            log.warn("Could not update lastActiveAt for user {}: {}", email, e.getMessage());
+        }
     }
 }

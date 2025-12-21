@@ -80,6 +80,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
         }
     }
+
     @PostMapping("/admin/search")
     public ResponseEntity<Page<UserReaponseDTO>> searchUsers(
             @RequestBody UserSearchRequestDTO searchDTO,

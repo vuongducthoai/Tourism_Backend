@@ -75,6 +75,39 @@ public class User extends BaseEntity{
     @Column(name = "verification_token_expiry")
     private LocalDateTime verificationTokenExpiry;
 
+    private LocalDateTime lastActiveAt;
+
+    @Transient
+    public boolean isOnline() {
+        if (lastActiveAt == null) {
+            return false;
+        }
+
+        LocalDateTime fiveMinutesAgo = LocalDateTime.now().minusMinutes(5);
+        return lastActiveAt.isAfter(fiveMinutesAgo);
+    }
+
+    @Transient
+    public String getActivityStatus() {
+        if (lastActiveAt == null) {
+            return "Offline";
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime fiveMinutesAgo = now.minusMinutes(5);
+        LocalDateTime thirtyMinutesAgo = now.minusMinutes(30);
+
+        if (lastActiveAt.isAfter(fiveMinutesAgo)) {
+            return "Online";
+        } else if (lastActiveAt.isAfter(thirtyMinutesAgo)) {
+            return "Away";
+        } else {
+            return "Offline";
+        }
+    }
+
+
+
     // --- Relationships ---
     @OneToMany(mappedBy = "user")
     @JsonIgnore
