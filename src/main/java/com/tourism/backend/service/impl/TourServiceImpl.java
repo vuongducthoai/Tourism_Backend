@@ -214,6 +214,7 @@ public class TourServiceImpl implements TourService {
                                 .vehicleName(t.getVehicleName())
                                 .startPoint(t.getStartPoint())
                                 .startPointName(startFullName)
+                                .vehicleType(t.getVehicleTyle().name())
                                 .endPoint(t.getEndPoint())
                                 .endPointName(endFullName)
                                 .departTime(t.getDepartTime())
