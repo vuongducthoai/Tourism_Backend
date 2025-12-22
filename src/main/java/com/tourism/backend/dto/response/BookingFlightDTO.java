@@ -14,6 +14,8 @@ public class BookingFlightDTO {
     private String airlineName;
     private String startPoint;
     private String startPointName;
+    private String vehicleType;
+    private String vehicleName;
     private String endPoint;
     private String endPointName;
     private LocalDateTime departTime;

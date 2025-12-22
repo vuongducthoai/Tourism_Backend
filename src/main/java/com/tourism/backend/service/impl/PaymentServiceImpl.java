@@ -293,7 +293,12 @@ public class PaymentServiceImpl implements PaymentService {
 
             // Gọi SDK
             CheckoutResponseData checkoutResponse = payOSService.createPaymentLink(paymentData);
+            Payment payment = paymentRepository.findByBooking(booking)
+                    .orElse(new Payment());
 
+            if(payment.getPaymentID() == null){
+                payment.setBooking(booking);
+            }
             log.info("PayOS payment created successfully");
             log.info("Checkout URL: {}", checkoutResponse.getCheckoutUrl());
             log.info("Order Code: {}", orderCode);
@@ -301,15 +306,17 @@ public class PaymentServiceImpl implements PaymentService {
 
 
             // Lưu payment record
-            Payment payment = new Payment();
-            payment.setBooking(booking);
             payment.setPaymentMethod(PaymentMethod.PAYOS);
             payment.setTransactionId(String.valueOf(orderCode));
             payment.setAmount(BigDecimal.valueOf(request.getAmount()));
             payment.setStatus(PaymentStatus.PENDING);
             payment.setTimeLimit(LocalDateTime.now().plusHours(24));
             payment.setPaymentDate(LocalDateTime.now());
-            booking.setBookingStatus(BookingStatus.PENDING_CONFIRMATION);
+            payment.setBankCode(null);
+            payment.setBankTransactionNo(null);
+            payment.setAccountName(null);
+            payment.setAccountNumber(null);
+            booking.setBookingStatus(BookingStatus.PENDING_PAYMENT);
             bookingRepository.save(booking);
             paymentRepository.save(payment);
 
