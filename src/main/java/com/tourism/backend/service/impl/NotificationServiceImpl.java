@@ -41,9 +41,8 @@ public class NotificationServiceImpl implements NotificationService {
     private final ObjectMapper objectMapper;
     private final NotificationSyncService notificationSyncService;
 
-    // [FIX 1] Inject chính nó (Self-injection) để kích hoạt @Async và @Transactional
     @Autowired
-    @Lazy // Bắt buộc phải có @Lazy để tránh lỗi Circular Dependency (Vòng lặp)
+    @Lazy
     private NotificationService self;
 
     @Override
@@ -92,17 +91,12 @@ public class NotificationServiceImpl implements NotificationService {
                 .metadata(objectMapper.valueToTree(metadata))
                 .build();
 
-        // 1. Lưu Notification gốc
         Notification savedNotification = notificationRepository.save(notification);
-        // Flush để đảm bảo ID đã được sinh ra và transaction này commit dữ liệu cơ bản
         notificationRepository.flush();
 
-        // [FIX 2] Gọi hàm distribute thông qua biến 'self' thay vì gọi trực tiếp
-        // Điều này giúp Spring tách transaction mới cho quá trình phân phối
         try {
             self.distributeBroadcastToUsers(savedNotification);
         } catch (Exception e) {
-            // Log lỗi nhưng KHÔNG throw exception để tránh rollback transaction lưu Notification gốc
             log.error("Error triggering async distribution: {}", e.getMessage());
         }
 
@@ -118,7 +112,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    @Async // Chạy ở luồng riêng biệt
+    @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW) // Tạo transaction hoàn toàn mới
     public void distributeBroadcastToUsers(Notification notification) {
         log.info("Starting Async Broadcast distribution for Notification ID: {}", notification.getNotificationID());
@@ -136,7 +130,6 @@ public class NotificationServiceImpl implements NotificationService {
                 userNotifications.add(un);
             }
 
-            // Batch save
             List<UserNotification> savedList = userNotificationRepository.saveAll(userNotifications);
             log.info("Saved {} UserNotifications asynchronously", savedList.size());
 
@@ -154,8 +147,6 @@ public class NotificationServiceImpl implements NotificationService {
             }
         } catch (Exception e) {
             log.error("Critical error in broadcast distribution", e);
-            // Vì dùng REQUIRES_NEW, nếu lỗi ở đây chỉ rollback phần UserNotification,
-            // Notification gốc ở bảng cha vẫn được giữ lại.
         }
     }
 

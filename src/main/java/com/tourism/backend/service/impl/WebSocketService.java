@@ -3,11 +3,13 @@ package com.tourism.backend.service.impl;
 import com.tourism.backend.dto.responseDTO.BookingResponseDTO;
 import com.tourism.backend.dto.responseDTO.UserReaponseDTO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class WebSocketService {
 
     private final SimpMessagingTemplate messagingTemplate;
@@ -28,5 +30,14 @@ public class WebSocketService {
 
     public void notifyUserUpdate(UserReaponseDTO user) {
         messagingTemplate.convertAndSend("/topic/admin/users", user);
+    }
+
+    public void notifyUserActivityUpdate(UserReaponseDTO userDTO){
+        try {
+            messagingTemplate.convertAndSend("/topic/admin/user-updates", userDTO);
+            log.info("Send user status update for userId: {}", userDTO.getUserID());
+        }catch (Exception e){
+            log.error("Error sending user update: {}", e.getMessage());
+        }
     }
 }

@@ -1,6 +1,10 @@
 package com.tourism.backend.security;
 
+import com.tourism.backend.convert.UserConverter;
+import com.tourism.backend.dto.response.UserResponseDTO;
+import com.tourism.backend.dto.responseDTO.UserReaponseDTO;
 import com.tourism.backend.repository.UserRepository;
+import com.tourism.backend.service.impl.WebSocketService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,16 +12,20 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cglib.core.Local;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @RequiredArgsConstructor
@@ -26,6 +34,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final WebSocketService webSocketService;
+    private final UserConverter userConverter;
+
+    private final Map<String, LocalDateTime> lastSocketSentTime = new ConcurrentHashMap<>();
+    private static final long SOCKET_THROTTLE_SECONDS = 30;
 
     @Override
     protected void doFilterInternal(
@@ -55,7 +68,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
                 log.debug("Set authentication for user: {} with role: {}", email, role);
-                updateUserActivityAsync(email);
+                updateUserActivityWithSocket(email);
             }
         } catch (ExpiredJwtException e) {
             log.error("JWT token expired: {}", e.getMessage());
@@ -77,9 +90,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private void updateUserActivityAsync(String email) {
+    private void updateUserActivityWithSocket(String email) {
         try {
-            userRepository.updateLastActiveAt(email, LocalDateTime.now());
+            LocalDateTime now = LocalDateTime.now();
+            userRepository.updateLastActiveAt(email, now);
+
+            LocalDateTime lastSent = lastSocketSentTime.get(email);
+            boolean shouldSentSocket = lastSent == null || lastSent.plusSeconds(SOCKET_THROTTLE_SECONDS).isBefore(now);
+            if(shouldSentSocket){
+                userRepository.findByEmail(email).ifPresent(user -> {
+                    UserReaponseDTO userDTO = userConverter.convertToUserResponseDTO(user);
+                    userDTO.setLastActiveAt(now);
+
+                    String activityStatus = "Online";
+                    userDTO.setActivityStatus(activityStatus);
+                    webSocketService.notifyUserActivityUpdate(userDTO);
+                });
+            }
             log.debug("Updated lastActiveAt for user: {}", email);
         } catch (Exception e) {
             log.warn("Could not update lastActiveAt for user {}: {}", email, e.getMessage());
