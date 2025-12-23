@@ -273,7 +273,7 @@ public class ChatbotService {
                - KHÔNG ĐƯỢC chỉ giới thiệu 1 hoặc một vài tour, PHẢI GIỚI THIỆU HET!
                
                📋 CÁCH NHẬN DIỆN TOUR CÓ COUPON:
-               - Trong Context, tìm dòng có "🎁 MÃ GIẢM GIÁ ĐẶC BIỆT: X VND"
+               - Trong Context, tìm dòng có " MÃ GIẢM GIÁ ĐẶC BIỆT: X VND"
                - Tour KHÔNG có dòng này thì BỎ QUA, không được đề cập
                
                📝 FORMAT BẮT BUỘC:
@@ -285,14 +285,14 @@ public class ChatbotService {
                ```
                Hiện tại có 2 tour đang có ưu đãi giảm giá đặc biệt:
 
-               🎯 **Tour Phú Quốc 3N2Đ**
-               3 Ngày 2 Đêm | 📅 20/12/2025
-               💰 Giá: 8,000,000 VND | 🎁 Mã giảm giá: 1,000,000 VND
+                **Tour Phú Quốc 3N2Đ**
+               3 Ngày 2 Đêm |  20/12/2025
+               💰 Giá: 8,000,000 VND |  Mã giảm giá: 1,000,000 VND
                **[Xem chi tiết](/tour/TOUR-PQ-01)**
 
-               🎯 **Tour Hà Giang 3N2Đ**
-               3 Ngày 2 Đêm | 📅 20/02/2026
-               💰 Giá: 6,100,000 VND | 🎁 Mã giảm giá: 100,000 VND
+                **Tour Hà Giang 3N2Đ**
+               3 Ngày 2 Đêm |  20/02/2026
+               💰 Giá: 6,100,000 VND |  Mã giảm giá: 100,000 VND
                **[Xem chi tiết](/tour/TOUR-HG-04)**
 
                Bạn có thể xem thêm các tour khác trên hệ thống.
@@ -332,14 +332,13 @@ public class ChatbotService {
             🔹 FORMAT VĂN BẢN (STYLE HIỆN ĐẠI & GỌN GÀNG):
             - **Không xuống dòng kép** giữa các thông tin của cùng một tour.
             - Khoảng cách giữa các đoạn không lớn.
-            - Sử dụng icon để làm nổi bật (🎁 💰 📅 ⭐).
             - **In đậm** tên Tour và các thông tin quan trọng.
             - **KHI CÓ NHIỀU TOUR**: Giới thiệu lần lượt từng tour, mỗi tour trên một đoạn riêng biệt.
             - Cấu trúc mong muốn cho mỗi tour:
                
-               **🎯 [Tên Tour]**
-               [Thời lượng] | 📅 [Ngày khởi hành]
-               💰 Giá: [Giá gốc] VND | 🎁 Mã giảm giá: [Số tiền giảm] VND
+               **[Tên Tour]**
+               [Thời lượng] | [Ngày khởi hành]
+               💰 Giá: [Giá gốc] VND |  Mã giảm giá: [Số tiền giảm] VND
                **[Xem chi tiết](/tour/TOUR-CODE)**
                
                (Xuống dòng trống trước khi giới thiệu tour tiếp theo)
@@ -372,7 +371,7 @@ public class ChatbotService {
                 .filter(d -> "TOUR_DEPARTURE".equals(d.getType()))
                 .map(VectorDocumentDTO::getEntityId)
                 .distinct()
-                .limit(3)  // ✅ Giảm từ 5 → 3 để tránh quá nhiều departures cùng tour
+                .limit(3)
                 .collect(Collectors.toList()));
 
         return result;
@@ -384,7 +383,7 @@ public class ChatbotService {
     ) {
         List<ChatMessageResponse.TourSuggestion> suggestions = new ArrayList<>();
         LocalDate today = LocalDate.now();
-        Set<Integer> addedTourIds = new HashSet<>(); // ✅ Tránh trùng tour
+        Set<Integer> addedTourIds = new HashSet<>();
 
         List<Integer> departureIds = entityIds.get("departures");
         if (departureIds != null && !departureIds.isEmpty()) {
