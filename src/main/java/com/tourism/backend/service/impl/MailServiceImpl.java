@@ -17,7 +17,7 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class MailServiceImpl implements MailService {
     private final JavaMailSender mailSender;
-    private final String ADMIN_EMAIL = "22110431@student.hcmute.edu.vn";
+    private final String ADMIN_EMAIL = "thoai12309@gmail.com";
 
     @Override
     public void sendRefundRequestNotification(Booking booking, RefundInformation refundInfo, BigDecimal totalRefundAmount) {

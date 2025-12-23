@@ -123,5 +123,5 @@ chatbot:
 
 gemini:
   api:
-    key:  ${GEMINI_API_KEY:aaaaaa}
+    key: ${GEMINI_API_KEY:aaaaaa}
 
