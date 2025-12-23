@@ -23,8 +23,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -364,6 +362,8 @@ public class BookingServiceImpl implements BookingService {
         flight.setAirlineName(transport.getVehicleName());
         flight.setStartPoint(transport.getStartPoint());
         flight.setEndPoint(transport.getEndPoint());
+        flight.setVehicleType(transport.getVehicleTyle().name());
+        flight.setVehicleName(transport.getVehicleName());
         flight.setStartPointName(getLocationName(transport.getStartPoint()));
         flight.setEndPointName(getLocationName(transport.getEndPoint()));
         flight.setDepartTime(transport.getDepartTime());

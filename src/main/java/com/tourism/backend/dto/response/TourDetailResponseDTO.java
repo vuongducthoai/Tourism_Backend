@@ -81,6 +81,7 @@ public class TourDetailResponseDTO {
         private String type; // OUTBOUND / INBOUND
         private String transportCode;
         private String vehicleName;
+        private String vehicleType;
         private String startPoint;
         private String startPointName;
         private String endPoint;
