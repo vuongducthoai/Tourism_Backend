@@ -5,6 +5,7 @@ import com.tourism.backend.dto.response.CouponResponse;
 import com.tourism.backend.entity.Coupon;
 import com.tourism.backend.entity.TourDeparture;
 import com.tourism.backend.enums.CouponType;
+import com.tourism.backend.enums.NotificationType;
 import com.tourism.backend.exception.BadRequestException;
 import com.tourism.backend.exception.DuplicateResourceException;
 import com.tourism.backend.exception.ResourceNotFoundException;
@@ -82,7 +83,7 @@ public class CouponServiceImpl implements CouponService {
         CouponResponse response = mapToResponse(savedCoupon);
 
         if (Boolean.TRUE.equals(request.getSendNotification())) {
-            notifyNewCoupon(response, "NEW_COUPON");
+            notifyNewCoupon(response, NotificationType.COUPON_CREATED);
         }
 
         log.info("Created new coupon: {}", savedCoupon.getCouponCode());
@@ -120,7 +121,7 @@ public class CouponServiceImpl implements CouponService {
         CouponResponse response = mapToResponse(updatedCoupon);
 
         if (Boolean.TRUE.equals(request.getSendNotification())) {
-            notifyNewCoupon(response, "COUPON_UPDATED");
+            notifyNewCoupon(response, NotificationType.COUPON_UPDATED);
         }
 
         return response;
@@ -195,30 +196,55 @@ public class CouponServiceImpl implements CouponService {
     }
 
     @Override
-    public void notifyNewCoupon(CouponResponse coupon, String type) {
+    public void notifyNewCoupon(CouponResponse coupon, NotificationType type) {
         String tempTitle = "";
         String tempMessage = "";
         long discountVal = coupon.getDiscountAmount() != null ? coupon.getDiscountAmount().longValue() : 0;
 
         switch (type) {
-            case "NEW_COUPON":
+            case COUPON_CREATED:
                 tempTitle = "🎉 Mã giảm giá mới!";
                 tempMessage = String.format("Sử dụng mã %s để giảm %,dđ. %s",
-                        coupon.getCouponCode(), discountVal,
+                        coupon.getCouponCode(),
+                        discountVal,
                         coupon.getDescription() != null ? coupon.getDescription() : "");
                 break;
-            case "COUPON_UPDATED":
-                tempTitle = "📝 Cập nhật mã giảm giá";
-                tempMessage = String.format("Mã %s đã được cập nhật với ưu đãi mới", coupon.getCouponCode());
+
+            case COUPON_ASSIGNED:
+                tempTitle = "🎁 Bạn nhận được mã giảm giá!";
+                tempMessage = String.format("Mã %s trị giá %,dđ đã được gửi đến bạn",
+                        coupon.getCouponCode(), discountVal);
                 break;
-            case "COUPON_EXPIRING":
+
+            case COUPON_RUNNING_OUT:
+                tempTitle = "🔥 Mã giảm giá sắp hết!";
+                tempMessage = String.format("Mã %s chỉ còn ít slot. Nhanh tay claim ngay!",
+                        coupon.getCouponCode());
+                break;
+
+            case COUPON_EXPIRED:
                 tempTitle = "⏰ Mã giảm giá sắp hết hạn";
                 tempMessage = String.format("Mã %s sẽ hết hạn vào %s. Nhanh tay sử dụng!",
                         coupon.getCouponCode(),
-                        coupon.getEndDate() != null ? coupon.getEndDate().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")) : "");
+                        coupon.getEndDate() != null
+                                ? coupon.getEndDate().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy"))
+                                : "");
                 break;
+
+            case COUPON_CLAIMED:
+                tempTitle = "✅ Claim thành công!";
+                tempMessage = String.format("Bạn đã claim mã %s trị giá %,dđ",
+                        coupon.getCouponCode(), discountVal);
+                break;
+
+            case COUPON_USED:
+                tempTitle = "💰 Sử dụng mã thành công!";
+                tempMessage = String.format("Bạn đã tiết kiệm %,dđ với mã %s",
+                        discountVal, coupon.getCouponCode());
+                break;
+
             default:
-                tempTitle = "Thông báo coupon";
+                tempTitle = "🔔 Thông báo coupon";
                 tempMessage = "Có cập nhật về mã giảm giá";
         }
 
@@ -284,7 +310,7 @@ public class CouponServiceImpl implements CouponService {
                     typeText,
                     coupon.getEndDate().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")));
 
-            notifyNewCoupon(response, "COUPON_EXPIRING");
+            notifyNewCoupon(response, NotificationType.COUPON_EXPIRED);
         }
 
         if (!expiringCoupons.isEmpty()) {

@@ -237,50 +237,38 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         try {
-            // 1. HARDCODE SỐ TIỀN TEST
-            int amount = 4000;
+            int amount = booking.getTotalPrice().intValue();
 
-            // 2. TẠO ORDER CODE NGẮN GỌN (Tránh quá dài gây lỗi ở một số bank)
-            // Lấy 8 số cuối của timestamp để đảm bảo unique mà không quá dài
             String timeStr = String.valueOf(System.currentTimeMillis());
             long orderCode = Long.parseLong(timeStr.substring(timeStr.length() - 8));
 
-            // 3. DESCRIPTION ĐƠN GIẢN (Không dấu, không ký tự đặc biệt)
-            // Chỉ lấy chữ và số từ bookingCode
             String cleanBookingCode = booking.getBookingCode().replaceAll("[^a-zA-Z0-9]", "");
             String description = "Thanh toan " + cleanBookingCode;
-            // Cắt ngắn nếu dài quá 25 ký tự
             if (description.length() > 25) description = description.substring(0, 25);
 
-            // 4. XỬ LÝ NULL CHO BUYER INFO (Rất quan trọng khi test)
             String buyerName = booking.getContactFullName();
             String buyerEmail = booking.getContactEmail();
             String buyerPhone = booking.getContactPhone();
 
-            // Nếu null thì gán giá trị mặc định để không bị lỗi 20
             if (buyerName == null || buyerName.isEmpty()) buyerName = "Khach hang Test";
             if (buyerEmail == null || buyerEmail.isEmpty()) buyerEmail = "test@gmail.com";
             if (buyerPhone == null || buyerPhone.isEmpty()) buyerPhone = "0900000000";
 
-            // Validate lại format phone (PayOS có thể check)
             buyerPhone = buyerPhone.replaceAll("[^0-9]", "");
             if (buyerPhone.length() > 10) buyerPhone = buyerPhone.substring(0, 10);
 
-            // 5. TẠO ITEMS (Tổng tiền item phải bằng amount = 2000)
             List<ItemData> items = new ArrayList<>();
             items.add(ItemData.builder()
                     .name("Tour Test " + cleanBookingCode)
                     .quantity(1)
-                    .price(amount) // Giá item = 2000
+                    .price(amount)
                     .build());
 
-            // 6. BUILD PAYMENT DATA
             PaymentData paymentData = PaymentData.builder()
                     .orderCode(orderCode)
-                    .amount(amount) // Tổng tiền = 2000
+                    .amount(amount)
                     .description(description)
                     .items(items)
-                    // Đảm bảo URL không có khoảng trắng
                     .returnUrl(payOSConfig.getReturnUrl().trim())
                     .cancelUrl(payOSConfig.getCancelUrl().trim())
                     .buyerName(buyerName)
@@ -291,7 +279,6 @@ public class PaymentServiceImpl implements PaymentService {
 
             log.info("Payment Data Test: {}", gson.toJson(paymentData));
 
-            // Gọi SDK
             CheckoutResponseData checkoutResponse = payOSService.createPaymentLink(paymentData);
             Payment payment = paymentRepository.findByBooking(booking)
                     .orElse(new Payment());
@@ -305,7 +292,6 @@ public class PaymentServiceImpl implements PaymentService {
             log.info("QR Code: {}", checkoutResponse.getQrCode());
 
 
-            // Lưu payment record
             payment.setPaymentMethod(PaymentMethod.PAYOS);
             payment.setTransactionId(String.valueOf(orderCode));
             payment.setAmount(BigDecimal.valueOf(request.getAmount()));

@@ -74,7 +74,13 @@ public class SecurityConfig {
                                 "/api/chatbot/**",
                                 "/api/admin/departures/**",
                                 "/api/admin/auth/**",
-                                "/api/v1/faker/**"
+                                "/api/v1/faker/**",
+                                "/api/forum/posts/**",
+                                "/api/forum/tags/**",
+                                "/api/forum/categories/**",
+                                "api/user/stats/**",
+                                "/api/upload/**",
+                                "/api/admin/cache/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(

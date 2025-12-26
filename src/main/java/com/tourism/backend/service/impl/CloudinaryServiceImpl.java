@@ -86,16 +86,17 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         }
     }
 
-    private String getPublicIdFromUrl(String url) {
-        try {
-            // Regex để tìm phần sau chữ 'upload/' và phiên bản 'v1234/' (nếu có) và trước đuôi file
-            Pattern pattern = Pattern.compile(".*/upload/(?:v\\d+/)?([^.]+)\\.[a-z]+$");
-            Matcher matcher = pattern.matcher(url);
-            if (matcher.find()) {
-                return matcher.group(1);
-            }
-        } catch (Exception e) {
-            log.error("Error extracting publicId from URL: {}", url, e);
+    @Override
+    public void deleteImageByPublicId(String publicId) throws IOException {
+        cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", "image"));
+    }
+
+    public String getPublicIdFromUrl(String url) {
+        // Regex như bạn đã có
+        Pattern pattern = Pattern.compile(".*/upload/(?:v\\d+/)?([^.]+)\\.[a-z]+$");
+        Matcher matcher = pattern.matcher(url);
+        if (matcher.find()) {
+            return matcher.group(1);
         }
         return null;
     }
