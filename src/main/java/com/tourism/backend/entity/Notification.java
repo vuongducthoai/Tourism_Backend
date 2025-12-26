@@ -1,13 +1,11 @@
 package com.tourism.backend.entity;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.tourism.backend.enums.NotificationType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-
-import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "notifications")
 @Data
@@ -23,8 +21,9 @@ public class Notification extends BaseEntity{
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(nullable = false, length = 50)
-    private String type;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NotificationType type;
 
     @Column(nullable = false)
     private String title;

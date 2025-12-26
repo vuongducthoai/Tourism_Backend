@@ -51,13 +51,24 @@ spring:
             token-uri: https://oauth2.googleapis.com/token
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: sub
-
+  cache:
+    type: simple
+    cache-names:
+      - categories
+      - popularCategories
+      - tags
+      - popularTags
+      - tagsByCategory
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 10s
 jwt:
   secret: 59379ea8-777d-49e1-ac8e-03420874f6a3
-  # 15'
-  access-token-expiration: 900000
+  # 7 ngày'
+  access-token-expiration: 604800000
   # 7 day
-  refresh-token-expiration: 604800000
+  refresh-token-expiration: 1209600000
 
 
 cloudinary:
@@ -118,10 +129,11 @@ chatbot:
 
   generation:
     model: gemini-2.0-flash
-    temperature: 0.7
+    temperature: 0.7.
     max-tokens: 1000
 
 gemini:
   api:
     key: ${GEMINI_API_KEY:aaaaaa}
+
 

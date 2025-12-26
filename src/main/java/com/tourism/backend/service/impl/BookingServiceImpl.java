@@ -92,13 +92,18 @@ public class BookingServiceImpl implements BookingService {
             LocalDateTime now = LocalDateTime.now();
 
             // 1. Lấy Coupon dành riêng cho Departure (Ưu tiên cao nhất)
-            List<Coupon> depCoupons = couponRepository.findByDepartureId(departureId, now);
-            if (!depCoupons.isEmpty()) {
-                dto.setDepartureCoupon(mapToCouponDTO(depCoupons.get(0)));
+            Coupon linkedCoupon = departure.getCoupon();
+
+            if (linkedCoupon != null &&
+                    linkedCoupon.getStartDate().isBefore(now) &&
+                    linkedCoupon.getEndDate().isAfter(now) &&
+                    (linkedCoupon.getUsageCount() < linkedCoupon.getUsageLimit())) {
+
+                dto.setDepartureCoupon(mapToCouponDTO(linkedCoupon));
             }
 
             // 2. Lấy danh sách Coupon Global (Cho khách chọn thêm)
-            List<Coupon> globalCoupons = couponRepository.findGlobalCoupons(now);
+            List<Coupon> globalCoupons = couponRepository.findActiveGlobalCoupons(now);
             dto.setGlobalCoupons(
                     globalCoupons.stream()
                             .map(this::mapToCouponDTO)
