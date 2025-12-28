@@ -131,7 +131,16 @@ public class MailServiceImpl implements MailService {
         message.setSubject("THÔNG BÁO HỦY TOUR VÀ HOÀN TIỀN: Booking Code " + booking.getBookingCode());
 
         NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
-        String formattedRefund = currencyFormatter.format(refundAmount);
+        BigDecimal paidByCoin = booking.getPaidByCoin() != null ? booking.getPaidByCoin() : BigDecimal.ZERO;
+        String cancelReason = booking.getCancelReason();
+        String formattedRefund;
+        if (cancelReason != null && cancelReason.trim().equals("Khách hàng yêu cầu hủy đơn và hoàn tiền tài khoản.")) {
+            // Trường hợp khách hàng yêu cầu hủy và hoàn tiền theo chính sách -> dùng refundAmount
+            formattedRefund = currencyFormatter.format(booking.getRefundAmount());
+        } else {
+            // Các trường hợp hủy khác -> hoàn toàn bộ số tiền đã trả + coin
+            formattedRefund = currencyFormatter.format(booking.getTotalPrice().add(paidByCoin));
+        }
         String tourName = booking.getTourDeparture().getTour().getTourName();
         String tourCode = booking.getTourDeparture().getTour().getTourCode();
 

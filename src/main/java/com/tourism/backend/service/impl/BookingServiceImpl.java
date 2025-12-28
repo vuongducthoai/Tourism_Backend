@@ -27,7 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -389,6 +391,50 @@ public class BookingServiceImpl implements BookingService {
     }
 
 
+    private BigDecimal determineCancellationFeePercent(LocalDateTime departureDate) {
+        if (departureDate == null) {
+            return BigDecimal.ZERO;
+        }
+
+        long daysUntilDeparture = ChronoUnit.DAYS.between(LocalDateTime.now(), departureDate);
+
+        if (daysUntilDeparture > 15) {
+            return new BigDecimal("0.10"); // 10% phí
+        }
+        if (daysUntilDeparture > 5) {
+            return new BigDecimal("0.50"); // 50% phí
+        }
+        if (daysUntilDeparture > 2) {
+            return new BigDecimal("0.70"); // 70% phí
+        }
+        if (daysUntilDeparture >= 0) {
+            return new BigDecimal("0.90"); // 90% phí
+        }
+
+        return BigDecimal.ONE; // Đã qua ngày khởi hành: không hoàn
+    }
+
+    private BigDecimal calculateRefundableAmount(Booking booking) {
+        BigDecimal totalPrice = booking.getTotalPrice() != null ? booking.getTotalPrice() : BigDecimal.ZERO;
+        BigDecimal paidByCoin = booking.getPaidByCoin() != null ? booking.getPaidByCoin() : BigDecimal.ZERO;
+        BigDecimal totalPaid = totalPrice.add(paidByCoin);
+
+        if (totalPaid.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+
+        BigDecimal feePercent = determineCancellationFeePercent(
+                booking.getTourDeparture() != null ? booking.getTourDeparture().getDepartureDate() : null
+        );
+
+        BigDecimal refundablePercent = BigDecimal.ONE.subtract(feePercent);
+        if (refundablePercent.compareTo(BigDecimal.ZERO) < 0) {
+            refundablePercent = BigDecimal.ZERO;
+        }
+
+        return totalPaid.multiply(refundablePercent).setScale(0, RoundingMode.DOWN);
+    }
+
 
     @Override
     public BookingResponseDTO cancelBooking(BookingCancellationRequestDTO requestDTO) {
@@ -401,22 +447,8 @@ public class BookingServiceImpl implements BookingService {
             throw new RuntimeException("Booking is already cancelled.");
         }
 
-        BigDecimal coinRefundAmount = BigDecimal.ZERO;
-
-        // Số tiền đã được giảm giá bằng Coin
-        BigDecimal paidByCoin = booking.getPaidByCoin() != null ? booking.getPaidByCoin() : BigDecimal.ZERO;
-        if (paidByCoin.compareTo(BigDecimal.ZERO) > 0) {
-            // Chỉ hoàn lại số Coin đã dùng để thanh toán
-            coinRefundAmount = paidByCoin.divide(COIN_RATE, 0, java.math.RoundingMode.DOWN);
-        }
-        BigDecimal totalValue = booking.getTotalPrice().add(paidByCoin);
-        if (totalValue.compareTo(BigDecimal.ZERO) > 0) {
-            // Số Coin hoàn lại
-            coinRefundAmount = totalValue.divide(COIN_RATE, 0, java.math.RoundingMode.DOWN);
-            // Tiền mặt hoàn lại (vì đã quy hết thành coin)refundAmount = BigDecimal.ZERO;
-        } else {
-            coinRefundAmount = BigDecimal.ZERO;
-        }
+        BigDecimal refundableAmount = calculateRefundableAmount(booking);
+        BigDecimal coinRefundAmount = refundableAmount.divide(COIN_RATE, 0, RoundingMode.DOWN);
 
 
         // 4. Cập nhật số dư Coin cho User
@@ -433,6 +465,7 @@ public class BookingServiceImpl implements BookingService {
 
         // 5. Cập nhật Booking
         booking.setBookingStatus(BookingStatus.CANCELLED);
+        booking.setRefundAmount(refundableAmount);
         Booking updatedBooking = bookingRepository.save(booking);
         BookingResponseDTO responseDTO = bookingConverter.convertToBookingResponseDTO(updatedBooking);
         webSocketService.notifyAdminBookingUpdate(responseDTO);
@@ -453,12 +486,8 @@ public class BookingServiceImpl implements BookingService {
             throw new RuntimeException("Booking is already in or past cancellation/refund process.");
         }
 
-        // 3. Tính toán tổng tiền hoàn (totalPrice + paidByCoin)
-        BigDecimal totalPrice = booking.getTotalPrice() != null ? booking.getTotalPrice() : BigDecimal.ZERO;
-        BigDecimal paidByCoin = booking.getPaidByCoin() != null ? booking.getPaidByCoin() : BigDecimal.ZERO;
-
-        // Số tiền yêu cầu hoàn = Tiền mặt phải trả + Giá trị tiền Coin đã dùng
-        BigDecimal totalRefundAmount = totalPrice.add(paidByCoin);
+        // 3. Tính toán số tiền hoàn dựa trên chính sách thời gian khởi hành
+        BigDecimal totalRefundAmount = calculateRefundableAmount(booking);
 
 
         // 4. Tạo và Lưu RefundInformation
@@ -481,7 +510,7 @@ public class BookingServiceImpl implements BookingService {
 
         // 5. Cập nhật Booking Status
         booking.setBookingStatus(BookingStatus.PENDING_REFUND);
-        booking.setRefundAmount(totalRefundAmount); // Lưu lại tổng tiền yêu cầu hoàn
+        booking.setRefundAmount(totalRefundAmount); // Lưu lại tổng tiền yêu cầu hoàn theo chính sách
         Booking updatedBooking = bookingRepository.save(booking);
 
         // 6. Gửi Email thông báo đến Admin
@@ -680,7 +709,7 @@ public BookingResponseDTO updateBookingStatus(BookingUpdateStatusRequestDTO requ
                     log.info("✅ Transaction verified: {}", verification.getTransactionReference());
                 }
 
-                booking.setRefundAmount(refundAmount);
+//                booking.setRefundAmount(refundAmount);
                 mailService.sendCancellationWithRefundEmail(booking, refundAmount);
 
             } else {

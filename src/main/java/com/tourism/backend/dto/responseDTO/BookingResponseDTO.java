@@ -47,4 +47,6 @@ public class BookingResponseDTO {
     private String refundBank;
     private String refundAccountNumber;
     private String refundAccountName;
+    private BigDecimal refundAmount;
+
 }
