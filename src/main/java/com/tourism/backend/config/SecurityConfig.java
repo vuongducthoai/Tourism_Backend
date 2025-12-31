@@ -80,7 +80,9 @@ public class SecurityConfig {
                                 "/api/forum/categories/**",
                                 "api/user/stats/**",
                                 "/api/upload/**",
-                                "/api/admin/cache/**"
+                                "/api/admin/cache/**",
+                                "/api/bookmarks/**",
+                                "/api/followers/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(

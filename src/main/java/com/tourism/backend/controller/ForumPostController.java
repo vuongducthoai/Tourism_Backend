@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/forum/posts")
 @RequiredArgsConstructor
@@ -136,6 +138,28 @@ public class ForumPostController {
                 .success(true)
                 .message("Thao tác like thành công")
                 .data(null)
+                .build());
+    }
+
+    @GetMapping("/{postId}/like-check")
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> checkPostLikeStatus(
+            @PathVariable Integer postId,
+            Authentication authentication
+    ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.ok(ApiResponse.<Map<String, Boolean>>builder()
+                    .success(true)
+                    .data(Map.of("isLiked", false))
+                    .build());
+        }
+
+        String username = authentication.getName();
+        boolean isLiked = forumPostService.checkPostLikeStatus(postId, username);
+
+        return ResponseEntity.ok(ApiResponse.<Map<String, Boolean>>builder()
+                .success(true)
+                .message("Kiểm tra trạng thái like thành công")
+                .data(Map.of("isLiked", isLiked))
                 .build());
     }
 

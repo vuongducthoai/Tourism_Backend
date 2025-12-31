@@ -17,4 +17,5 @@ public interface ForumPostService {
     void togglePostLike(Integer postId, String username);
     PostDetailResponseDTO addComment(Integer postId, CommentRequestDTO request, String username);
     void toggleCommentLike(Integer commentId, String username);
+    boolean checkPostLikeStatus(Integer postId, String username);
 }

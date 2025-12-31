@@ -14,4 +14,5 @@ public class UserStatsResponseDTO {
     private Integer totalComments;
     private Integer totalLikesReceived;
     private Integer reputationPoints;
+    private Integer totalFollowers;
 }

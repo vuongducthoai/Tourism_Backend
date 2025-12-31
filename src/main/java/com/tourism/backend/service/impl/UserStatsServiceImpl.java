@@ -4,10 +4,7 @@ import com.tourism.backend.dto.response.UserStatsResponseDTO;
 import com.tourism.backend.entity.User;
 import com.tourism.backend.enums.ContentStatus;
 import com.tourism.backend.exception.ResourceNotFoundException;
-import com.tourism.backend.repository.ForumPostRepository;
-import com.tourism.backend.repository.PostCommentRepository;
-import com.tourism.backend.repository.PostLikeRepository;
-import com.tourism.backend.repository.UserRepository;
+import com.tourism.backend.repository.*;
 import com.tourism.backend.service.UserStatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +17,7 @@ public class UserStatsServiceImpl implements UserStatsService {
     private final ForumPostRepository postRepository;
     private final PostCommentRepository commentRepository;
     private final PostLikeRepository likeRepository;
+    private final FollowerRepository followerRepository;
 
     @Override
     public UserStatsResponseDTO getUserStats(String username) {
@@ -32,22 +30,25 @@ public class UserStatsServiceImpl implements UserStatsService {
         // Đếm số bình luận của user
         long totalComments = commentRepository.countByUser(user);
 
+        //Đếm số follower của user
+        long totalFollowers = followerRepository.countFollowersByUserId(user.getUserID());
+
         // Đếm số like mà các bài viết của user nhận được
         long totalLikesReceived = likeRepository.countByPostUser(user);
 
         // Tính điểm uy tín (có thể tùy chỉnh công thức)
-        int reputationPoints = calculateReputation((int) totalPosts, (int) totalComments, (int) totalLikesReceived);
+        int reputationPoints = calculateReputation((int) totalPosts, (int) totalComments, (int) totalLikesReceived, (int)totalFollowers);
 
         return UserStatsResponseDTO.builder()
                 .totalPosts((int) totalPosts)
                 .totalComments((int) totalComments)
                 .totalLikesReceived((int) totalLikesReceived)
                 .reputationPoints(reputationPoints)
+                .totalFollowers((int)totalFollowers)
                 .build();
     }
 
-    private int calculateReputation(int posts, int comments, int likes) {
-        //  10 điểm/bài + 2 điểm/bình luận + 5 điểm/lượt thích nhận được
-        return posts * 10 + comments * 2 + likes * 5;
+    private int calculateReputation(int posts, int comments, int likes, int followers) {
+        return posts * 10 + comments * 2 + likes * 5 + followers * 3;
     }
 }
