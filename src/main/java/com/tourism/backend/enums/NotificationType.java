@@ -40,5 +40,9 @@ public enum NotificationType {
     NEW_COMMENT,
     COMMENT_REPLY,
     COMMENT_LIKE,
-    POST_LIKE
+    POST_LIKE,
+
+    //========= Follower Notification =============
+    NEW_FOLLOWER,
+    NEW_POST_FROM_FOLLOWING
 }

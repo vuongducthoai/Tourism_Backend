@@ -44,6 +44,7 @@ public class ForumPostServiceImpl implements ForumPostService {
     private final PostCommentRepository postCommentRepository;
     private final RedisTemplate<String, String> redisTemplate;
     private final NotificationService notificationService;
+    private final FollowerRepository followerRepository;
 
     private String getCurrentUsername() {
         try {
@@ -53,7 +54,7 @@ public class ForumPostServiceImpl implements ForumPostService {
                 return authentication.getName();
             }
         } catch (Exception e) {
-            // Log if needed
+            System.out.println(e.getMessage());
         }
         return null;
     }
@@ -162,8 +163,49 @@ public class ForumPostServiceImpl implements ForumPostService {
         }
 
         post.setPostTags(postTags);
+        notifyFollowersAboutNewPost(post, user);
 
         return mapToDetailResponse(post, username);
+    }
+
+    private void notifyFollowersAboutNewPost(ForumPost post, User author) {
+        try {
+            List<Integer> followerIds = followerRepository.findFollowerUserIdsByUserId(author.getUserID());
+
+            if(followerIds.isEmpty()){
+                log.info("No followers to notify for post {}", post.getPostID());
+                return;
+            }
+
+            String title = "Bài viết mới";
+            String message = String.format("%s vừa đăng bài viết mới: '%s'",
+                    author.getFullName(),
+                    post.getTitle());
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("postId", post.getPostID());
+            metadata.put("postTitle", post.getTitle());
+            metadata.put("authorId", author.getUserID());
+            metadata.put("authorName", author.getFullName());
+            metadata.put("authorAvatar", author.getAvatar());
+            metadata.put("postThumbnail", post.getThumbnailUrl());
+
+            for(Integer followerId : followerIds){
+                try {
+                    notificationService.createNotification(
+                            followerId,
+                            NotificationType.NEW_POST_FROM_FOLLOWING,
+                            title,
+                            message,
+                            metadata
+                    );
+                } catch (Exception e){
+                    log.error("Failed to send notification to followers {}", followerId);
+                }
+            }
+            log.info("Sent new post notifications to {} followers", followerIds.size());
+        }catch (Exception e){
+            log.error("Failed to notify followers about new post: {}", e.getMessage(), e);
+        }
     }
 
     @Override
@@ -195,7 +237,6 @@ public class ForumPostServiceImpl implements ForumPostService {
                 // Add bookmark check if you have bookmarks
             }
         }
-
         return mapToDetailResponse(post, isLiked, isBookmarked);
     }
 
@@ -215,15 +256,46 @@ public class ForumPostServiceImpl implements ForumPostService {
         if (existingLike.isPresent()) {
             post.getLikes().remove(existingLike.get());
             post.setLikeCount(Math.max(0, post.getLikeCount() - 1));
+            log.info("User {} unliked post {}", user.getUserID(), postId);
         } else {
             PostLike newLike = new PostLike();
             newLike.setPost(post);
             newLike.setUser(user);
             post.getLikes().add(newLike);
             post.setLikeCount(post.getLikeCount() + 1);
+
+            log.info("User {} liked post {}", user.getUserID(), postId);
+            if (!post.getUser().getUserID().equals(user.getUserID())) {
+                notifyPostLike(post, user);
+            }
         }
 
         forumPostRepository.save(post);
+    }
+
+    private void notifyPostLike(ForumPost post, User liker) {
+        try {
+            String title = "Thích bài viết";
+            String message = String.format("%s đã thích bài viết '%s' của bạn", liker.getFullName(), post.getTitle());
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("postId", post.getPostID());
+            metadata.put("likerId", liker.getUserID());
+            metadata.put("likerName", liker.getFullName());
+            metadata.put("likerAvatar", liker.getAvatar());
+            metadata.put("postTitle", post.getTitle());
+
+            notificationService.createNotification(
+                    post.getUser().getUserID(),
+                    NotificationType.POST_LIKE,
+                    title,
+                    message,
+                    metadata
+            );
+            log.info("Post like notification sent to user {}", post.getUser().getUserID());
+        } catch (Exception e){
+            log.error("Failed to sent post like notification: {}", e.getMessage(), e);
+        }
     }
 
     @Override
@@ -343,6 +415,7 @@ public class ForumPostServiceImpl implements ForumPostService {
         if (existingLike.isPresent()) {
             comment.getLikes().remove(existingLike.get());
             comment.setLikeCount(Math.max(0, comment.getLikeCount() - 1));
+            log.info("User {} unliked comment {}", user.getUserID(), commentId);
         } else {
             CommentLike newLike = new CommentLike();
             newLike.setComment(comment);
@@ -350,6 +423,8 @@ public class ForumPostServiceImpl implements ForumPostService {
             comment.getLikes().add(newLike);
             comment.setLikeCount(comment.getLikeCount() + 1);
 
+            log.info("User {} liked comment {}", user.getUserID(), commentId);
+            
             if(!comment.getUser().getUserID().equals(user.getUserID())){
                 notifyCommentLike(comment, user);
             }
@@ -358,22 +433,46 @@ public class ForumPostServiceImpl implements ForumPostService {
         postCommentRepository.save(comment);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean checkPostLikeStatus(Integer postId, String username) {
+        ForumPost post = forumPostRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bài viết không tồn tại"));
+
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
+
+        boolean isLiked = post.getLikes() != null && post.getLikes().stream()
+                .anyMatch(like -> like.getUser().getUserID().equals(user.getUserID()));
+
+        return isLiked;
+    }
+
     private void notifyCommentLike(PostComment comment, User liker) {
         try {
-            String message = String.format("%s đã thích bình luận của bạn", liker.getFullName());
+            ForumPost post = comment.getPost();
+            String title = "Thích bình luận";
+            String message = String.format("%s đã thích bình luận của bạn trong bài '%s'",
+                    liker.getFullName(),
+                    post.getTitle()
+            );
 
             Map<String, Object> metadata = new HashMap<>();
+            metadata.put("postId", post.getPostID());
             metadata.put("commentId", comment.getCommentID());
-            metadata.put("postId", comment.getPost().getPostID());
             metadata.put("likerId", liker.getUserID());
+            metadata.put("likerName", liker.getFullName());
+            metadata.put("likerAvatar", liker.getAvatar());
+            metadata.put("postTitle", post.getTitle());
 
             notificationService.createNotification(
                     comment.getUser().getUserID(),
                     NotificationType.COMMENT_LIKE,
-                    "Thích bình luận",
+                    title,
                     message,
                     metadata
             );
+            log.info("Like notification sent to user {} for comment {}", comment.getUser().getUserID(), comment.getCommentID());
         } catch (Exception e){
             log.error("Failed to send like notification");
         }

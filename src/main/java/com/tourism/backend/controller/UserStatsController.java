@@ -17,8 +17,7 @@ public class UserStatsController {
     private final UserStatsService userStatsService;
     @GetMapping
     public ResponseEntity<ApiResponse<UserStatsResponseDTO>> getCurrentUserStats(Authentication authentication) {
-        // authentication.getName() thường là username hoặc userID
-        String username = authentication.getName(); // hoặc lấy từ token nếu dùng JWT
+        String username = authentication.getName();
 
         UserStatsResponseDTO stats = userStatsService.getUserStats(username);
 
