@@ -81,7 +81,9 @@ public class BookingConverter {
             dto.setAccountName(booking.getPayment().getAccountName());
             dto.setAccountNumber(booking.getPayment().getAccountNumber());
         }
-
+        if (booking.getRefundAmount() != null) {
+            dto.setRefundAmount(booking.getRefundAmount());
+        }
         // Set list passengers từ BookingPassenger
         if (booking.getPassengers() != null && !booking.getPassengers().isEmpty()) {
             List<BookingPassengerResponseDTO> passengerDTOs = booking.getPassengers().stream()
